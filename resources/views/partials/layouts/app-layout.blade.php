@@ -68,7 +68,7 @@
 
 
 
-        @include('partials.layouts.vendor')
+        @include('partials.layouts.vendorjs')
 
 
         <!-- App js -->

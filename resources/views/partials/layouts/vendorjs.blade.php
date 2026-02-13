@@ -7,3 +7,5 @@
 <script src="{{ asset('assets/js/jquery.slimscroll.min.js') }}"></script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
 
+
+

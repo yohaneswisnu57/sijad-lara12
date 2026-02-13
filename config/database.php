@@ -63,6 +63,21 @@ return [
             ]) : [],
         ],
 
+        'pegawai' => [
+            'driver' => 'pgsql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST_PGW', '127.0.0.1'),
+            'port' => env('DB_PORT_PGW', '5432'),
+            'database' => env('DB_DATABASE_PGW', 'forge'),
+            'username' => env('DB_USERNAME_PGW', 'forge'),
+            'password' => env('DB_PASSWORD_PGW', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'schema' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
