@@ -3,14 +3,14 @@
 
     <head>
         <meta charset="utf-8" />
-        <title>SIJAD - Admin & Dashboard</title>
+        <title>SIJAD - Login Sistem Informasi Jabatan Akademik</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
-        <meta content="" name="author" />
+        <meta content="Sistem Informasi Jabatan Akademik Dosen" name="description" />
+        <meta name="author" content="SIJAD" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
         <!-- App favicon -->
-        <link rel="shortcut icon" href="../assets/images/favicon.ico">
+        <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
 
         <!-- App css -->
         @include('partials.layouts.vendorcss')
@@ -28,93 +28,108 @@
                             <div class="card-body">
                                 <div class="px-3">
                                     <div class="auth-logo-box">
-                                        <a href="../dashboard/analytics-index.html" class="logo logo-admin"><img src="../assets/images/logo-sm.png" height="55" alt="logo" class="auth-logo"></a>
+                                        <a href="{{ url('/') }}" class="logo logo-admin"><img src="{{ asset('assets/images/logo-sm.png') }}" height="55" alt="logo" class="auth-logo"></a>
                                     </div><!--end auth-logo-box-->
-                                    
+
                                     <div class="text-center auth-logo-text">
                                         <h4 class="mt-0 mb-3 mt-5">Let's Get Started SIJAD</h4>
-                                        <p class="text-muted mb-0">Sign in to continue to SIJAD.</p>  
-                                    </div> <!--end auth-logo-text-->  
-    
-                                    
-                                    <form class="form-horizontal auth-form my-4" action="#" method="POST" >
-            
+                                        <p class="text-muted mb-0">Sign in to continue to SIJAD.</p>
+                                    </div> <!--end auth-logo-text-->
+
+                                    {{-- Tampilkan pesan error validasi --}}
+                                    @if ($errors->any())
+                                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                                        <ul class="mb-0 pl-3">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    @endif
+
+                                    {{-- Tampilkan pesan status (mis. setelah logout) --}}
+                                    @if (session('status'))
+                                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                                        {{ session('status') }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    @endif
+
+                                    <form class="form-horizontal auth-form my-4" action="{{ route('login') }}" method="POST">
+                                        @csrf
+
                                         <div class="form-group">
-                                            <label for="username">Username</label>
+                                            <label for="userid">User ID</label>
                                             <div class="input-group mb-3">
                                                 <span class="auth-form-icon">
-                                                    <i class="dripicons-user"></i> 
-                                                </span>                                                                                                              
-                                                <input type="text" class="form-control" id="username" placeholder="Enter username">
-                                            </div>                                    
-                                        </div><!--end form-group--> 
-            
+                                                    <i class="dripicons-user"></i>
+                                                </span>
+                                                <input type="text"
+                                                       class="form-control @error('userid') is-invalid @enderror"
+                                                       id="userid"
+                                                       name="userid"
+                                                       value="{{ old('userid') }}"
+                                                       placeholder="Masukkan User ID"
+                                                       required
+                                                       autofocus>
+                                            </div>
+                                            @error('userid')
+                                                <span class="text-danger font-12">{{ $message }}</span>
+                                            @enderror
+                                        </div><!--end form-group-->
+
                                         <div class="form-group">
-                                            <label for="userpassword">Password</label>                                            
-                                            <div class="input-group mb-3"> 
+                                            <label for="password">Password</label>
+                                            <div class="input-group mb-3">
                                                 <span class="auth-form-icon">
-                                                    <i class="dripicons-lock"></i> 
-                                                </span>                                                       
-                                                <input type="password" class="form-control" id="userpassword" placeholder="Enter password">
-                                            </div>                               
-                                        </div><!--end form-group--> 
-            
+                                                    <i class="dripicons-lock"></i>
+                                                </span>
+                                                <input type="password"
+                                                       class="form-control @error('password') is-invalid @enderror"
+                                                       id="password"
+                                                       name="password"
+                                                       placeholder="Masukkan Password"
+                                                       required>
+                                            </div>
+                                            @error('password')
+                                                <span class="text-danger font-12">{{ $message }}</span>
+                                            @enderror
+                                        </div><!--end form-group-->
+
                                         <div class="form-group row mt-4">
                                             <div class="col-sm-6">
                                                 <div class="custom-control custom-switch switch-success">
-                                                    <input type="checkbox" class="custom-control-input" id="customSwitchSuccess">
-                                                    <label class="custom-control-label text-muted" for="customSwitchSuccess">Remember me</label>
+                                                    <input type="checkbox" class="custom-control-input" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                                                    <label class="custom-control-label text-muted" for="remember">Remember me</label>
                                                 </div>
-                                            </div><!--end col--> 
-                                            <div class="col-sm-6 text-right">
-                                                <a href="auth-recover-pw.html" class="text-muted font-13"><i class="dripicons-lock"></i> Forgot password?</a>                                    
-                                            </div><!--end col--> 
-                                        </div><!--end form-group--> 
-            
+                                            </div><!--end col-->
+                                        </div><!--end form-group-->
+
                                         <div class="form-group mb-0 row">
                                             <div class="col-12 mt-2">
-                                                <button class="btn btn-gradient-primary btn-round btn-block waves-effect waves-light" type="button">Log In <i class="fas fa-sign-in-alt ml-1"></i></button>
-                                            </div><!--end col--> 
-                                        </div> <!--end form-group-->                           
+                                                <button class="btn btn-gradient-primary btn-round btn-block waves-effect waves-light" type="submit">Log In <i class="fas fa-sign-in-alt ml-1"></i></button>
+                                            </div><!--end col-->
+                                        </div> <!--end form-group-->
                                     </form><!--end form-->
                                 </div><!--end /div-->
-                                
-                                <div class="m-3 text-center text-muted">
-                                    <p class="">Don't have an account ?  <a href="../authentication/auth-register.html" class="text-primary ml-2">Free Resister</a></p>
-                                </div>
                             </div><!--end card-body-->
                         </div><!--end card-->
-                        <div class="account-social text-center mt-4">
-                            <h6 class="my-4">Or Login With</h6>
-                            <ul class="list-inline mb-4">
-                                <li class="list-inline-item">
-                                    <a href="" class="">
-                                        <i class="fab fa-facebook-f facebook"></i>
-                                    </a>                                    
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="" class="">
-                                        <i class="fab fa-twitter twitter"></i>
-                                    </a>                                    
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="" class="">
-                                        <i class="fab fa-google google"></i>
-                                    </a>                                    
-                                </li>
-                            </ul>
-                        </div><!--end account-social-->
                     </div><!--end auth-page-->
-                </div><!--end col-->           
+                </div><!--end col-->
             </div><!--end row-->
         </div><!--end container-->
         <!-- End Log In page -->
 
-        
+
       @include('partials.layouts.vendorjs')
 
       @stack('scripts')
-        
+
     </body>
 
 </html>

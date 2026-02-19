@@ -15,6 +15,8 @@ class User extends Authenticatable
     protected $connection = 'pegawai';
     protected $table = 'sc_user';
     protected $primaryKey = 'userid';
+    public $incrementing = false;
+    protected $keyType = 'string';
     public $timestamps = false;
 
     
