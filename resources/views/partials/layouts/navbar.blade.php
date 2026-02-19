@@ -94,9 +94,6 @@
             </a>
             <div class="dropdown-menu dropdown-menu-right">
                 <a class="dropdown-item" href="#"><i class="ti-user text-muted mr-2"></i> Profile</a>
-                <a class="dropdown-item" href="#"><i class="ti-wallet text-muted mr-2"></i> My Wallet</a>
-                <a class="dropdown-item" href="#"><i class="ti-settings text-muted mr-2"></i> Settings</a>
-                <a class="dropdown-item" href="#"><i class="ti-lock text-muted mr-2"></i> Lock screen</a>
                 <div class="dropdown-divider mb-0"></div>
                 
                 {{-- Logout Link --}}

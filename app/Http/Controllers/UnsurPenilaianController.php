@@ -15,7 +15,7 @@ class UnsurPenilaianController extends Controller
         // Ambil data dengan parent relasi, urutkan berdasarkan kode nomor
         $unsurPenilaians = UnsurPenilaian::with('parent')
                             ->orderBy('kode_nomor', 'asc')
-                            ->paginate(10);
+                            ->get();
 
         return view('pages.unsur-penilaian.index', compact('unsurPenilaians'));
     }

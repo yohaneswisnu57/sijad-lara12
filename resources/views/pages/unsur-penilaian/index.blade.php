@@ -1,5 +1,13 @@
 @extends('partials.layouts.app-layout')
 
+@section('title', 'Unsur Penilaian')
+
+@push('css')
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css" rel="stylesheet" type="text/css" />
+@endpush
+
 @section('content')
 
     <!-- Page-Title -->
@@ -51,56 +59,46 @@
                         </div>
                     @endif
 
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
-                            <thead>
+                    <table id="datatable" class="table table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                        <thead>
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="15%">Kode</th>
+                            <th>Nama Unsur</th>
+                            <th width="20%">Induk</th>
+                            <th width="10%">Jenis</th> <!-- Header/Detail -->
+                            <th width="15%">Aksi</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($unsurPenilaians as $index => $item)
                             <tr>
-                                <th width="5%">No</th>
-                                <th width="15%">Kode</th>
-                                <th>Nama Unsur</th>
-                                <th width="20%">Induk</th>
-                                <th width="10%">Jenis</th> <!-- Header/Detail -->
-                                <th width="15%">Aksi</th>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $item->kode_nomor }}</td>
+                                <td>{{ $item->nama_unsur }}</td>
+                                <td>{{ $item->parent ? $item->parent->nama_unsur : '-' }}</td>
+                                <td>
+                                    @if($item->is_header)
+                                        <span class="badge badge-soft-primary">Header</span>
+                                    @else
+                                        <span class="badge badge-soft-success">Detail</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('unsur-penilaian.edit', $item->id) }}" class="btn btn-sm btn-info mr-1" data-toggle="tooltip" data-placement="top" title="Edit"><i class="fas fa-edit"></i></a>
+                                        
+                                        <form action="{{ route('unsur-penilaian.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus"><i class="fas fa-trash-alt"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
-                            </thead>
-                            <tbody>
-                            @forelse ($unsurPenilaians as $index => $item)
-                                <tr>
-                                    <td>{{ $unsurPenilaians->firstItem() + $index }}</td>
-                                    <td>{{ $item->kode_nomor }}</td>
-                                    <td>{{ $item->nama_unsur }}</td>
-                                    <td>{{ $item->parent ? $item->parent->nama_unsur : '-' }}</td>
-                                    <td>
-                                        @if($item->is_header)
-                                            <span class="badge badge-soft-primary">Header</span>
-                                        @else
-                                            <span class="badge badge-soft-success">Detail</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('unsur-penilaian.edit', $item->id) }}" class="btn btn-sm btn-info" data-toggle="tooltip" data-placement="top" title="Edit"><i class="fas fa-edit"></i></a>
-                                            
-                                            <form action="{{ route('unsur-penilaian.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger ml-1" data-toggle="tooltip" data-placement="top" title="Hapus"><i class="fas fa-trash-alt"></i></button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="text-center">Belum ada data unsur penilaian.</td>
-                                </tr>
-                            @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-4">
-                        {{ $unsurPenilaians->links('pagination::bootstrap-4') }}
-                    </div>
+                        @endforeach
+                        </tbody>
+                    </table>
 
                 </div>
             </div>
@@ -108,3 +106,20 @@
     </div> <!-- end row -->
 
 @endsection
+
+@push('scripts')
+    <!-- Required datatable js -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+    <!-- Responsive examples -->
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('#datatable').DataTable();
+            // Tooltip initialization if needed
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+@endpush

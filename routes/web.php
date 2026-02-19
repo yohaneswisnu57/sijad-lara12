@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UnsurPenilaianController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
@@ -8,5 +9,5 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 
     // Master Data Routes
-    Route::resource('unsur-penilaian', \App\Http\Controllers\UnsurPenilaianController::class);
+    Route::resource('unsur-penilaian', UnsurPenilaianController::class);
 });
