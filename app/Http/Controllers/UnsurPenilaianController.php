@@ -21,6 +21,20 @@ class UnsurPenilaianController extends Controller
     }
 
     /**
+     * Menampilkan Unsur Penilaian dalam bentuk Tree View Tabel.
+     */
+    public function tree(Request $request)
+    {
+        // Ambil hanya Root (parent_id null) + load semua children/cucu
+        $rootUnsurPenilaians = UnsurPenilaian::whereNull('parent_id')
+                                ->orderBy('kode_nomor', 'asc')
+                                ->with('childrenRecursive')
+                                ->get();
+
+        return view('pages.unsur-penilaian.tree', compact('rootUnsurPenilaians'));
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -103,7 +117,7 @@ class UnsurPenilaianController extends Controller
         // Cek apakah punya children? Jika cascade delete diatur di migration, aman.
         // Tapi validasi logic juga bagus.
         if ($unsurPenilaian->children()->exists()) {
-             return back()->with('error', 'Gagal hapus: Unsur ini memiliki sub-unsur (children).');
+             return back()->with('error', 'Unsur ini memiliki sub-unsur.');
         }
 
         $unsurPenilaian->delete();

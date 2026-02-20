@@ -37,27 +37,12 @@
                             <p class="text-muted font-13 mb-0">Manajemen data unsur penilaian untuk perhitungan angka kredit.</p>
                         </div>
                         <div class="col-md-6 text-right">
+                            <a href="{{ route('unsur-penilaian.tree') }}" class="btn btn-secondary btn-sm mr-2"><i class="fas fa-network-wired mr-2"></i>Lihat Tree View</a>
                             <a href="{{ route('unsur-penilaian.create') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus mr-2"></i>Tambah Data Baru</a>
                         </div>
                     </div>
 
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            <strong>Berhasil!</strong> {{ session('success') }}
-                        </div>
-                    @endif
 
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                            <strong>Gagal!</strong> {{ session('error') }}
-                        </div>
-                    @endif
 
                     <table id="datatable" class="table table-bordered dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                         <thead>
@@ -86,12 +71,12 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ route('unsur-penilaian.edit', $item->id) }}" class="btn btn-sm btn-info mr-1" data-toggle="tooltip" data-placement="top" title="Edit"><i class="fas fa-edit"></i></a>
+                                        <a href="{{ route('unsur-penilaian.edit', $item->id) }}" class="btn btn-sm btn-info mr-1"><i class="fas fa-edit"></i></a>
                                         
                                         <form action="{{ route('unsur-penilaian.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus"><i class="fas fa-trash-alt"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -118,8 +103,6 @@
     <script>
         $(document).ready(function() {
             $('#datatable').DataTable();
-            // Tooltip initialization if needed
-            $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
 @endpush

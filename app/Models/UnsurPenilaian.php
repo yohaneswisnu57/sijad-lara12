@@ -43,6 +43,14 @@ class UnsurPenilaian extends Model
      */
     public function children(): HasMany
     {
-        return $this->hasMany(UnsurPenilaian::class, 'parent_id');
+        return $this->hasMany(UnsurPenilaian::class, 'parent_id')->orderBy('kode_nomor');
+    }
+
+    /**
+     * Mendapatkan sub-unsur secara rekursif (untuk tree view).
+     */
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
     }
 }

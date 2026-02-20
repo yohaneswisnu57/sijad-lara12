@@ -58,6 +58,59 @@
 
 
         <!-- App js -->
+        <!-- App js -->
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <style>
+            /* Penyesuaian Ukuran Toast SweetAlert2 */
+            .swal2-popup.swal2-toast {
+                padding: 0.625rem 1rem !important; /* Padding proporsional */
+                width: auto !important;
+            }
+            .swal2-popup.swal2-toast .swal2-title {
+                font-size: 1.15rem !important; /* Font judul tidak terlalu besar */
+                margin: 0 !important;
+            }
+            .swal2-popup.swal2-toast .swal2-icon {
+                width: 1.75em !important;      /* Perkecil icon dari default (biasanya 2em) */
+                height: 1.75em !important;
+                margin: 0 0.75rem 0 0 !important;
+            }
+            .swal2-popup.swal2-toast .swal2-html-container {
+                font-size: 0.9rem !important;
+            }
+        </style>
+        
+        <script>
+            // Toast Configuration
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            // Display Toast from Session
+            @if(session('success'))
+                Toast.fire({
+                    icon: 'success',
+                    title: '{{ session('success') }}'
+                });
+            @endif
+
+            @if(session('error'))
+                Toast.fire({
+                    icon: 'error',
+                    title: '{{ session('error') }}'
+                });
+            @endif
+        </script>
+
         @stack('scripts')
 
 

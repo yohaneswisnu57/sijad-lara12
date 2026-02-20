@@ -9,5 +9,6 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 
     // Master Data Routes
+    Route::get('unsur-penilaian/tree', [UnsurPenilaianController::class, 'tree'])->name('unsur-penilaian.tree');
     Route::resource('unsur-penilaian', UnsurPenilaianController::class);
 });
