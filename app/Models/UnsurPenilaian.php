@@ -53,4 +53,9 @@ class UnsurPenilaian extends Model
     {
         return $this->children()->with('childrenRecursive');
     }
+
+    public function kegiatan_dosens()
+    {
+        return $this->hasMany(KegiatanDosen::class, 'unsur_id');
+    }
 }
