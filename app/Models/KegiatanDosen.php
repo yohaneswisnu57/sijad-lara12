@@ -28,10 +28,10 @@ class KegiatanDosen extends Model
     }
 
     /**
-     * Relasi ke Dosen (via model User).
+     * Relasi ke Dosen (via model User, primary key = userid).
      */
     public function dosen()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'userid');
     }
 }
