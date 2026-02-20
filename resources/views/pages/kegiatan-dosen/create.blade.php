@@ -31,6 +31,49 @@
                         @csrf
 
                         {{-- ============================================================ --}}
+                        {{-- BAGIAN 0: PILIH DARI KELAS MENGAJAR (Dari API SEVIMA)        --}}
+                        {{-- ============================================================ --}}
+                        @if($kelasList->isNotEmpty())
+                        <div class="card border border-success mb-4">
+                            <div class="card-header bg-success text-white py-2 d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-chalkboard-teacher mr-2"></i> <strong>Pilih dari Kelas Mengajar Saya</strong></span>
+                                <small class="text-white-50">{{ $kelasList->count() }} kelas &bull; Klik untuk auto-fill form</small>
+                            </div>
+                            <div class="card-body p-2">
+                                <div class="row">
+                                    @foreach($kelasList as $kelas)
+                                    <div class="col-md-4 mb-2">
+                                        <div class="card border kelas-card h-100" style="cursor:pointer;"
+                                            onclick="pilihKelas(
+                                                '{{ addslashes($kelas->namaMatKul) }} (Kelas {{ $kelas->namaKelas }})',
+                                                '{{ $kelas->idPeriode }}',
+                                                '{{ $kelas->sks }}',
+                                                'SKS'
+                                            )">
+                                            <div class="card-body p-2">
+                                                <p class="mb-1 font-weight-bold text-primary" style="font-size:0.82rem;">
+                                                    {{ $kelas->kodeMatKul }} &bull; Kelas <strong>{{ $kelas->namaKelas }}</strong>
+                                                </p>
+                                                <p class="mb-1 text-dark" style="font-size:0.80rem;">{{ $kelas->namaMatKul }}</p>
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-calendar-alt mr-1 text-info"></i>{{ $kelas->periodeLabel }}<br>
+                                                    <i class="fas fa-university mr-1 text-secondary"></i>{{ Str::limit($kelas->programStudi, 35) }}<br>
+                                                    <i class="fas fa-users mr-1 text-success"></i>Kuota: {{ $kelas->dayaTampung }} &bull;
+                                                    <strong class="text-primary">{{ $kelas->sks }} SKS</strong>
+                                                    @if($kelas->isMbkm)
+                                                        <span class="badge badge-warning ml-1">MBKM</span>
+                                                    @endif
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- ============================================================ --}}
                         {{-- BAGIAN 1: PEMILIHAN UNSUR BERDASARKAN HIERARKI               --}}
                         {{-- ============================================================ --}}
                         <div class="card border mb-4">
@@ -190,7 +233,32 @@
 @endsection
 
 @push('scripts')
+<style>
+    .kelas-card:hover { border-color: #28a745 !important; background: #f0fff4; transition: all .2s; }
+    .kelas-card.selected { border-color: #28a745 !important; background: #d4edda; }
+</style>
 <script>
+    /**
+     * Auto-fill form dari kelas yang dipilih di panel API SEVIMA.
+     */
+    function pilihKelas(namaMatKul, semester, sks, jadwalRuangan) {
+        // Highlight card terpilih
+        document.querySelectorAll('.kelas-card').forEach(c => c.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+
+        // Isi field uraian & periode
+        document.getElementById('uraian_kegiatan').value   = namaMatKul;
+        document.getElementById('periode_semester').value  = semester;
+        document.getElementById('satuan_hasil').value      = 'SKS';
+        document.getElementById('volume').value            = sks;
+
+        // Hitung ulang AK
+        hitungAK();
+
+        // Scroll ke form detail
+        document.querySelector('#uraian_kegiatan').closest('.card').scrollIntoView({ behavior: 'smooth' });
+    }
+
     // Data hierarki dari server (PHP -> JS)
     const unsurHierarchy = @json($rootUnsurs);
 

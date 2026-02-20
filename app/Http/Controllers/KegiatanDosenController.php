@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\KegiatanDosen;
 use App\Models\UnsurPenilaian;
+use App\Repositories\Contracts\KelasRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class KegiatanDosenController extends Controller
 {
+    public function __construct(
+        private readonly KelasRepositoryInterface $kelasRepository
+    ) {}
+
     /**
      * Menampilkan daftar kegiatan milik dosen yang sedang login,
      * dikelompokkan per Unsur Induk (Root).
@@ -22,7 +27,6 @@ class KegiatanDosenController extends Controller
 
         // Kelompokkan berdasarkan unsur root (induk paling atas)
         $grouped = $kegiatanList->groupBy(function ($item) {
-            // Telusuri ke atas hingga menemukan root
             $unsur = $item->unsur;
             while ($unsur && $unsur->parent_id !== null) {
                 $unsur = $unsur->parent;
@@ -35,22 +39,26 @@ class KegiatanDosenController extends Controller
 
     /**
      * Menampilkan form tambah kegiatan baru.
-     * Struktur unsur ditampilkan sebagai hierarki untuk memilih sub-unsur.
+     * Sertakan data kelas mengajar dari API SEVIMA.
      */
-    public function create()
+    public function create(Request $request)
     {
-        // Ambil semua unsur root beserta children rekursif
         $rootUnsurs = UnsurPenilaian::whereNull('parent_id')
             ->orderBy('kode_nomor')
             ->with('childrenRecursive')
             ->get();
 
-        // Hanya unsur DETAIL (is_header = false) yang bisa dipilih
         $detailUnsurs = UnsurPenilaian::where('is_header', false)
             ->orderBy('kode_nomor')
             ->get();
 
-        return view('pages.kegiatan-dosen.create', compact('rootUnsurs', 'detailUnsurs'));
+        // Ambil data kelas dari API SEVIMA
+        $nip      = Auth::user()->userid;
+        $semester = $request->get('semester', '');
+
+        $kelasList = $this->kelasRepository->getByDosen($nip, $semester);
+
+        return view('pages.kegiatan-dosen.create', compact('rootUnsurs', 'detailUnsurs', 'kelasList'));
     }
 
     /**
