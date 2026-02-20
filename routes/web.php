@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UnsurPenilaianController;
 use App\Http\Controllers\KegiatanDosenController;
+use App\Http\Controllers\KelasMengajarController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
@@ -15,4 +16,12 @@ Route::middleware('auth')->group(function () {
 
     // Transaksi Routes
     Route::resource('kegiatan-dosen', KegiatanDosenController::class);
+
+    // Kelas Mengajar Routes
+    Route::get('kelas-mengajar', [KelasMengajarController::class, 'index'])->name('kelas-mengajar.index');
+    Route::post('kelas-mengajar/klaim', [KelasMengajarController::class, 'klaim'])->name('kelas-mengajar.klaim');
+    Route::get('kelas-mengajar/tambah-manual', [KelasMengajarController::class, 'create'])->name('kelas-mengajar.create');
+    Route::post('kelas-mengajar/tambah-manual', [KelasMengajarController::class, 'store'])->name('kelas-mengajar.store');
+    Route::get('kelas-mengajar/{kelasMengajar}/sk', [KelasMengajarController::class, 'downloadSK'])->name('kelas-mengajar.sk');
+    Route::delete('kelas-mengajar/{kelasMengajar}', [KelasMengajarController::class, 'destroy'])->name('kelas-mengajar.destroy');
 });

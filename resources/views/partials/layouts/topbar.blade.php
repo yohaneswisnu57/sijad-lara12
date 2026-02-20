@@ -32,7 +32,7 @@
                         </ul><!--end submenu-->
                     </li><!--end has-submenu-->
 
-                    <li class="has-submenu {{ Request::is('kegiatan-dosen*') ? 'active' : '' }}">
+                    <li class="has-submenu {{ Request::is('kegiatan-dosen*') || Request::is('kelas-mengajar*') ? 'active' : '' }}">
                         <a href="#">
                             <i class="dripicons-checklist"></i>
                             <span>Transaksi</span>
@@ -40,6 +40,9 @@
                         <ul class="submenu">
                             <li class="{{ Request::is('kegiatan-dosen*') ? 'active' : '' }}">
                                 <a href="{{ route('kegiatan-dosen.index') }}"><i class="dripicons-dot"></i>Kegiatan Dosen</a>
+                            </li>
+                            <li class="{{ Request::is('kelas-mengajar*') ? 'active' : '' }}">
+                                <a href="{{ route('kelas-mengajar.index') }}"><i class="dripicons-dot"></i>Kelas Mengajar</a>
                             </li>
                         </ul>
                     </li><!--end has-submenu-->

@@ -94,16 +94,30 @@ class SiakadApiService implements SiakadApiServiceInterface
     /**
      * {@inheritdoc}
      * Contoh URL: /dosen/2304/kelas
+     *
+     * CATATAN: Endpoint SEVIMA /dosen/:nidn/kelas TIDAK menerima filter query param.
+     * Error 422 jika mengirim semester=xxx. Filter periode dilakukan di KelasRepository.
      */
     public function getKelasByDosen(string $nip, string $semester = ''): array
     {
-        $params = ['nidn' => $nip];
+        // Hanya kirim nidn sebagai path param, TANPA query param tambahan
+        return $this->get('kelas_dosen', ['nidn' => $nip]);
+    }
 
-        if (!empty($semester)) {
-            $params['semester'] = $semester;
+    /**
+     * {@inheritdoc}
+     * Menggunakan filter query: GET /kelas?f-inip={nip}&f-id_periode={periode}
+     * Sesuai format filter API SEVIMA SiakadCloud.
+     */
+    public function getKelasByNip(string $nip, string $periode = ''): array
+    {
+        $params = ['f-inip' => $nip];
+
+        if (!empty($periode)) {
+            $params['f-id_periode'] = $periode;
         }
 
-        return $this->get('kelas_dosen', $params);
+        return $this->get('/kelas', $params);
     }
 
     /**

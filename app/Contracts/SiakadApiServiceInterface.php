@@ -35,12 +35,23 @@ interface SiakadApiServiceInterface
 
     /**
      * Mengambil daftar kelas/jadwal mengajar seorang dosen.
+     * Menggunakan path param: /dosen/:nidn/kelas
      *
-     * @param  string  $nip       NIP/userid dosen
-     * @param  string  $semester  Kode semester (misal: '20241')
+     * @param  string  $nip       NIP/userid dosen (SEVIMA internal ID)
+     * @param  string  $semester  Kode periode (misal: '20251'), kosong = semua
      * @return array
      */
     public function getKelasByDosen(string $nip, string $semester = ''): array;
+
+    /**
+     * Mengambil daftar kelas mengajar berdasarkan NIP dosen.
+     * Menggunakan query filter: /kelas?f-inip=NIP&f-id_periode=PERIODE
+     *
+     * @param  string  $nip      NIP dosen (userid)
+     * @param  string  $periode  Kode periode (misal: '20251'), kosong = semua
+     * @return array
+     */
+    public function getKelasByNip(string $nip, string $periode = ''): array;
 
     /**
      * Mengambil detail satu kelas.
