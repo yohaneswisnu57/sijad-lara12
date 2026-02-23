@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UnsurPenilaianController;
 use App\Http\Controllers\KegiatanDosenController;
 use App\Http\Controllers\KelasMengajarController;
+use App\Http\Controllers\MatkulPengajarController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/', function () {
@@ -24,4 +25,8 @@ Route::middleware('auth')->group(function () {
     Route::post('kelas-mengajar/tambah-manual', [KelasMengajarController::class, 'store'])->name('kelas-mengajar.store');
     Route::get('kelas-mengajar/{kelasMengajar}/sk', [KelasMengajarController::class, 'downloadSK'])->name('kelas-mengajar.sk');
     Route::delete('kelas-mengajar/{kelasMengajar}', [KelasMengajarController::class, 'destroy'])->name('kelas-mengajar.destroy');
+
+    // Mata Kuliah Pengajar (read-only dari SIAKAD)
+    Route::get('matkul-pengajar', [MatkulPengajarController::class, 'index'])->name('matkul-pengajar.index');
+    Route::post('matkul-pengajar/refresh', [MatkulPengajarController::class, 'refresh'])->name('matkul-pengajar.refresh');
 });

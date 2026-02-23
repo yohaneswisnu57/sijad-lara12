@@ -131,6 +131,31 @@ class SiakadApiService implements SiakadApiServiceInterface
 
     /**
      * {@inheritdoc}
+     * GET /dosen?f-nip={nip}&f-id_status_aktif=AA
+     *
+     * Digunakan untuk lookup ID numerik internal SEVIMA dari NIP login user.
+     */
+    public function getDosenByNip(string $nip): array
+    {
+        return $this->get('daftar_dosen', [
+            'f-nip'             => $nip,
+            'f-id_status_aktif' => 'AA',  // AA = aktif
+        ]);
+    }
+
+    /**
+     * {@inheritdoc}
+     * GET /dosen/{id}/kelas
+     *
+     * Menggunakan ID numerik SEVIMA (bukan NIP), didapat dari getDosenByNip().
+     */
+    public function getKelasByDosenId(string|int $siakadId): array
+    {
+        return $this->get('kelas_by_id', ['id' => (string) $siakadId]);
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getSemesterAktif(): array
     {

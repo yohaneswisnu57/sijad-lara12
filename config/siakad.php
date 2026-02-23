@@ -36,11 +36,13 @@ return [
     |
     */
     'endpoints' => [
-        'kelas_dosen'     => '/dosen/:nidn/kelas',        // Kelas mengajar dosen (path param)
-        'detail_kelas'    => '/kelas/:id',                 // Detail kelas
-        'mahasiswa_kelas' => '/kelas/:id/mahasiswa',       // Mahasiswa per kelas
-        'semester_aktif'  => '/semester/aktif',            // Semester aktif
-        'data_dosen'      => '/dosen/:nidn',               // Info dosen
+        'kelas_dosen'      => '/dosen/:nidn/kelas',        // Kelas mengajar (by NIDN path param)
+        'kelas_by_id'      => '/dosen/:id/kelas',           // Kelas mengajar (by SEVIMA numeric ID)
+        'daftar_dosen'     => '/dosen',                     // Cari dosen (query filter f-nip, dll)
+        'detail_kelas'     => '/kelas/:id',                 // Detail kelas
+        'mahasiswa_kelas'  => '/kelas/:id/mahasiswa',       // Mahasiswa per kelas
+        'semester_aktif'   => '/semester/aktif',            // Semester aktif
+        'data_dosen'       => '/dosen/:nidn',               // Info dosen by NIDN
     ],
 
     /*

@@ -46,6 +46,14 @@
                             </li>
                         </ul>
                     </li><!--end has-submenu-->
+
+                    <li class="{{ Request::is('matkul-pengajar*') ? 'active' : '' }}">
+                        <a href="{{ route('matkul-pengajar.index') }}">
+                            <i class="dripicons-graduation"></i>
+                            <span>Mata Kuliah Pengajar</span>
+                        </a>
+                    </li>
+
                 </ul><!-- End navigation menu -->
             </div> <!-- end navigation -->
         </div> <!-- end container-fluid -->

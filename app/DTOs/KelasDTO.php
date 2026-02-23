@@ -103,7 +103,7 @@ class KelasDTO
         $semLabel = match($sem) {
             1 => 'Gasal',
             2 => 'Genap',
-            3 => 'Antara',
+            3 => 'Sisipan',
             default => "Semester {$sem}",
         };
 

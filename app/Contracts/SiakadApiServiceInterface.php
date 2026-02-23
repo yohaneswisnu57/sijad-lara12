@@ -62,9 +62,25 @@ interface SiakadApiServiceInterface
     public function getDetailKelas(string $kelasId): array;
 
     /**
-     * Mengambil semester yang sedang aktif.
+     * Mencari data dosen berdasarkan NIP (login username).
+     * Endpoint: GET /dosen?f-nip={nip}&f-id_status_aktif=AA
      *
+     * Digunakan untuk mendapatkan ID numerik internal SEVIMA dari NIP.
+     *
+     * @param  string  $nip
+     * @return array          Full response (meta + data)
+     */
+    public function getDosenByNip(string $nip): array;
+
+    /**
+     * Mengambil semua kelas mengajar dosen berdasarkan ID numerik SEVIMA.
+     * Endpoint: GET /dosen/{id}/kelas
+     *
+     * Berbeda dengan getKelasByDosen (yang pakai path /dosen/:nidn/kelas),
+     * method ini menggunakan ID numerik internal SEVIMA yang didapat dari getDosenByNip().
+     *
+     * @param  string|int  $siakadId  ID numerik internal SEVIMA (misal: 1900)
      * @return array
      */
-    public function getSemesterAktif(): array;
+    public function getKelasByDosenId(string|int $siakadId): array;
 }
