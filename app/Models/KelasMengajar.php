@@ -9,15 +9,18 @@ use App\DTOs\KelasDTO;
 class KelasMengajar extends Model
 {
     use HasFactory;
-
+    
+      
     protected $table = 'tr_kelas_mengajars';
     protected $guarded = ['id'];
 
     protected $casts = [
-        'sks'          => 'integer',
-        'daya_tampung' => 'integer',
-        'is_mbkm'      => 'boolean',
-        'diklaim_at'   => 'datetime',
+        'id_pegawai_siakad' => 'integer',
+        'sks'              => 'integer',
+        'sks_pengusul'     => 'integer',
+        'daya_tampung'     => 'integer',
+        'is_mbkm'          => 'boolean',
+        'diklaim_at'       => 'datetime',
     ];
 
     // ── Scopes ───────────────────────────────────────────────────────────────
