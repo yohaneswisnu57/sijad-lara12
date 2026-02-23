@@ -37,10 +37,17 @@
 
     {{-- ── Statistik ───────────────────────────────────────────────────────── --}}
     <div class="row mb-3">
-        <div class="col-md-6">
+        <div class="col-md-3">
             <div class="card shadow-sm text-center py-3">
-                <div class="text-muted small mb-1">Total Kelas Diampu</div>
-                <div class="h2 font-weight-bold text-primary mb-0">{{ $totalKelas }}</div>
+                <div class="text-muted small mb-1">Mata Kuliah</div>
+                <div class="h2 font-weight-bold text-primary mb-0">{{ $totalMatkul }}</div>
+                <div class="text-muted small">mata kuliah unik</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center py-3">
+                <div class="text-muted small mb-1">Total Kelas</div>
+                <div class="h2 font-weight-bold text-info mb-0">{{ $totalKelas }}</div>
                 <div class="text-muted small">kelas (semua semester)</div>
             </div>
         </div>
@@ -93,7 +100,7 @@
     </div>
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
-    {{-- KELAS PER PERIODE (Accordion)                                         --}}
+    {{-- KELAS PER PERIODE                                                     --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
 
     @if($kelasList->isEmpty())
@@ -115,12 +122,13 @@
     @else
         <div id="accordion-kelas">
             @php $firstPeriode = true; @endphp
-            @foreach($grouped as $idPeriode => $kelasPeriode)
+            @foreach($grouped as $idPeriode => $matkulGroups)
             @php
                 $periodeLabel    = \App\DTOs\KelasDTO::formatPeriode($idPeriode);
-                $totalSksPeriode = $kelasPeriode->sum('sks');
                 $collapseId      = 'collapse-' . $idPeriode;
-                $diklaim         = $kelasPeriode->filter(fn ($k) => in_array((string)$k->id, $sudahDiklaim))->count();
+                $kelasCount      = $matkulGroups->flatten(1)->count();
+                $totalSksPeriode = $matkulGroups->flatten(1)->sum('sks');
+                $diklaimCount    = $matkulGroups->flatten(1)->filter(fn ($k) => in_array((string)$k->id, $sudahDiklaim))->count();
             @endphp
             <div class="card shadow-sm mb-2">
                 <div class="card-header p-0">
@@ -134,10 +142,11 @@
                             <span class="text-muted ml-2 small">({{ $idPeriode }})</span>
                         </span>
                         <span>
-                            <span class="badge badge-primary mr-1">{{ $kelasPeriode->count() }} kelas</span>
+                            <span class="badge badge-primary mr-1">{{ $matkulGroups->count() }} MK</span>
+                            <span class="badge badge-info mr-1">{{ $kelasCount }} kelas</span>
                             <span class="badge badge-success mr-1">{{ $totalSksPeriode }} SKS</span>
-                            @if($diklaim > 0)
-                                <span class="badge badge-info mr-2">{{ $diklaim }} diklaim</span>
+                            @if($diklaimCount > 0)
+                                <span class="badge badge-warning mr-2">{{ $diklaimCount }} diklaim</span>
                             @endif
                             <i class="fas fa-chevron-down small text-muted"></i>
                         </span>
@@ -150,47 +159,37 @@
                         <table class="table table-sm table-hover mb-0">
                             <thead class="thead-light">
                                 <tr>
-                                    <th width="3%">#</th>
-                                    <th width="10%">Kode MK</th>
+                                    <th width="4%">#</th>
+                                    <th width="12%">Kode MK</th>
                                     <th>Nama Mata Kuliah</th>
-                                    <th width="6%" class="text-center">Kelas</th>
-                                    <th width="5%" class="text-center">SKS</th>
-                                    <th width="15%">Program Studi</th>
-                                    <th width="5%" class="text-center">Jenjang</th>
-                                    <th width="6%" class="text-center">Kuota</th>
-                                    <th width="5%" class="text-center">MBKM</th>
-                                    <th width="10%" class="text-center">Status Klaim</th>
+                                    <th width="6%" class="text-center">SKS</th>
+                                    <th width="18%">Program Studi</th>
+                                    <th width="10%" class="text-center">Kelas</th>
+                                    <th width="12%" class="text-center">Status Klaim</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($kelasPeriode as $i => $kelas)
-                                @php $sudah = in_array((string)$kelas->id, $sudahDiklaim); @endphp
-                                <tr class="{{ $sudah ? 'table-success' : '' }}">
-                                    <td class="text-muted small align-middle">{{ $i + 1 }}</td>
-                                    <td class="align-middle"><code>{{ $kelas->kodeMatKul }}</code></td>
-                                    <td class="align-middle font-weight-bold">
-                                        {{ $kelas->namaMatKul }}
+                                @foreach($matkulGroups as $groupIdx => $kelasItems)
+                                @php
+                                    $first      = $kelasItems->first();
+                                    // Gabung nama kelas: A, B, C
+                                    $namaKelasGabung = $kelasItems->pluck('namaKelas')->sort()->implode(', ');
+                                    // Semua ID kelas dalam group ini
+                                    $kelasIds   = $kelasItems->pluck('id')->map(fn($v) => (string)$v)->toArray();
+                                    // Cek apakah SEMUA kelas di group sudah diklaim
+                                    $allDiklaim = collect($kelasIds)->every(fn ($id) => in_array($id, $sudahDiklaim));
+                                @endphp
+                                <tr class="{{ $allDiklaim ? 'table-success' : '' }}">
+                                    <td class="text-muted small align-middle">{{ $groupIdx + 1 }}</td>
+                                    <td class="align-middle"><code>{{ $first->kodeMatKul }}</code></td>
+                                    <td class="align-middle font-weight-bold">{{ $first->namaMatKul }}</td>
+                                    <td class="text-center align-middle font-weight-bold text-primary">{{ $first->sks }}</td>
+                                    <td class="align-middle"><small>{{ $first->programStudi ?: '—' }}</small></td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge badge-secondary px-2 py-1">{{ $namaKelasGabung }}</span>
                                     </td>
                                     <td class="text-center align-middle">
-                                        <span class="badge badge-secondary">{{ $kelas->namaKelas }}</span>
-                                    </td>
-                                    <td class="text-center align-middle font-weight-bold text-primary">
-                                        {{ $kelas->sks }}
-                                    </td>
-                                    <td class="align-middle"><small>{{ $kelas->programStudi ?: '—' }}</small></td>
-                                    <td class="text-center align-middle">
-                                        <span class="badge badge-light border">{{ $kelas->jenjang ?: '—' }}</span>
-                                    </td>
-                                    <td class="text-center align-middle">{{ $kelas->dayaTampung ?: '—' }}</td>
-                                    <td class="text-center align-middle">
-                                        @if($kelas->isMbkm)
-                                            <span class="badge badge-warning">MBKM</span>
-                                        @else
-                                            <span class="text-muted">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        @if($sudah)
+                                        @if($allDiklaim)
                                             <span class="badge badge-success px-2 py-1">
                                                 <i class="fas fa-check mr-1"></i>Sudah Diklaim
                                             </span>
@@ -198,19 +197,20 @@
                                             <button type="button"
                                                     class="btn btn-xs btn-primary btn-klaim"
                                                     title="Klaim kelas ini"
-                                                    data-kelas-id="{{ $kelas->id }}"
-                                                    data-kode="{{ $kelas->kodeMatKul }}"
-                                                    data-nama="{{ $kelas->namaMatKul }}"
-                                                    data-kelas="{{ $kelas->namaKelas }}"
-                                                    data-sks="{{ $kelas->sks }}"
-                                                    data-periode="{{ $kelas->idPeriode }}"
-                                                    data-periode-label="{{ $kelas->periodeLabel }}"
-                                                    data-prodi="{{ $kelas->programStudi }}"
-                                                    data-prodi-id="{{ $kelas->idProgramStudi }}"
-                                                    data-jenjang="{{ $kelas->jenjang }}"
-                                                    data-kurikulum="{{ $kelas->idKurikulum }}"
-                                                    data-daya-tampung="{{ $kelas->dayaTampung }}"
-                                                    data-is-mbkm="{{ $kelas->isMbkm ? '1' : '0' }}">
+                                                    data-kelas-ids="{{ $kelasItems->pluck('id')->implode(',') }}"
+                                                    data-kode="{{ $first->kodeMatKul }}"
+                                                    data-nama="{{ $first->namaMatKul }}"
+                                                    data-kelas="{{ $namaKelasGabung }}"
+                                                    data-sks="{{ $first->sks }}"
+                                                    data-periode="{{ $first->idPeriode }}"
+                                                    data-periode-label="{{ $first->periodeLabel }}"
+                                                    data-prodi="{{ $first->programStudi }}"
+                                                    data-prodi-id="{{ $first->idProgramStudi }}"
+                                                    data-jenjang="{{ $first->jenjang }}"
+                                                    data-kurikulum="{{ $first->idKurikulum }}"
+                                                    data-daya-tampung="{{ $first->dayaTampung }}"
+                                                    data-is-mbkm="{{ $first->isMbkm ? '1' : '0' }}"
+                                                    data-kelas-detail='@json($kelasItems->map(fn($k) => ["id" => $k->id, "namaKelas" => $k->namaKelas])->values())'>
                                                 <i class="fas fa-hand-pointer mr-1"></i>Klaim
                                             </button>
                                         @endif
@@ -220,11 +220,11 @@
                             </tbody>
                             <tfoot>
                                 <tr class="table-light">
-                                    <td colspan="4" class="text-right text-muted small font-weight-bold">
-                                        Total SKS Semester ini:
+                                    <td colspan="3" class="text-right text-muted small font-weight-bold">
+                                        Total: {{ $matkulGroups->count() }} mata kuliah, {{ $kelasCount }} kelas
                                     </td>
                                     <td class="text-center font-weight-bold text-success">{{ $totalSksPeriode }}</td>
-                                    <td colspan="5"></td>
+                                    <td colspan="3"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -244,11 +244,11 @@
             <form id="formKlaim" action="{{ route('matkul-pengajar.klaim') }}" method="POST"
                   enctype="multipart/form-data">
                 @csrf
-                {{-- Hidden: filter periode saat ini untuk redirect kembali --}}
                 <input type="hidden" name="redirect_periode" value="{{ $periode }}">
 
-                {{-- Hidden: data dari API (diisi oleh JS) --}}
-                <input type="hidden" name="kelas_id_siakad"  id="f_kelas_id_siakad">
+                {{-- Hidden fields — diisi oleh JS --}}
+                <input type="hidden" name="kelas_ids"          id="f_kelas_ids">
+                <input type="hidden" name="kelas_detail_json"  id="f_kelas_detail_json">
                 <input type="hidden" name="kode_mata_kuliah" id="f_kode_mata_kuliah">
                 <input type="hidden" name="nama_mata_kuliah" id="f_nama_mata_kuliah">
                 <input type="hidden" name="nama_kelas"       id="f_nama_kelas">
@@ -273,7 +273,7 @@
                     </div>
 
                     <div class="modal-body">
-                        {{-- ── Error validasi (muncul jika form dikembalikan) ────────── --}}
+                        {{-- ── Error validasi ─────────────────────────────────────────── --}}
                         @if($errors->any())
                             <div class="alert alert-danger alert-sm py-2 mb-3">
                                 <strong><i class="fas fa-exclamation-circle mr-1"></i>Perbaiki data berikut:</strong>
@@ -284,11 +284,12 @@
                                 </ul>
                             </div>
                         @endif
+
                         {{-- ── Info Kelas (read-only) ─────────────────────────────────── --}}
                         <div class="card bg-light mb-3">
                             <div class="card-body py-2 px-3">
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-5">
                                         <small class="text-muted">Mata Kuliah</small>
                                         <p class="mb-1 font-weight-bold" id="info_nama_mk">—</p>
                                     </div>
@@ -296,21 +297,21 @@
                                         <small class="text-muted">Kode MK</small>
                                         <p class="mb-1 font-weight-bold" id="info_kode_mk">—</p>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <small class="text-muted">Kelas</small>
                                         <p class="mb-1 font-weight-bold" id="info_kelas">—</p>
                                     </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">SKS SIAKAD</small>
+                                        <p class="mb-1 font-weight-bold text-primary" id="info_sks_siakad">—</p>
+                                    </div>
                                     <div class="col-md-6">
                                         <small class="text-muted">Program Studi</small>
-                                        <p class="mb-1" id="info_prodi">—</p>
+                                        <p class="mb-0" id="info_prodi">—</p>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-6">
                                         <small class="text-muted">Semester</small>
-                                        <p class="mb-1" id="info_periode">—</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">SKS di SIAKAD</small>
-                                        <p class="mb-1 font-weight-bold text-primary" id="info_sks_siakad">—</p>
+                                        <p class="mb-0" id="info_periode">—</p>
                                     </div>
                                 </div>
                             </div>
@@ -376,38 +377,37 @@
 
 @push('scripts')
 <script>
-// ── Isi modal klaim dari data-attribute tombol ──────────────────────────────
+// ── Isi modal klaim ─────────────────────────────────────────────────────────
 function isiModalKlaim(d) {
-    document.getElementById('f_kelas_id_siakad').value  = d.kelasId  || d['kelas_id_siakad']  || '';
-    document.getElementById('f_kode_mata_kuliah').value = d.kode     || d['kode_mata_kuliah'] || '';
-    document.getElementById('f_nama_mata_kuliah').value = d.nama     || d['nama_mata_kuliah'] || '';
-    document.getElementById('f_nama_kelas').value       = d.kelas    || d['nama_kelas']       || '';
-    document.getElementById('f_sks_siakad').value       = d.sks      || d['sks_siakad']      || '';
-    document.getElementById('f_id_periode').value       = d.periode  || d['id_periode']      || '';
-    document.getElementById('f_periode_label').value    = d.periodeLabel || d['periode_label'] || '';
-    document.getElementById('f_program_studi').value    = d.prodi    || d['program_studi']   || '';
-    document.getElementById('f_id_program_studi').value = d.prodiId  || d['id_program_studi']|| '';
-    document.getElementById('f_jenjang').value          = d.jenjang  || d['jenjang']         || '';
-    document.getElementById('f_id_kurikulum').value     = d.kurikulum|| d['id_kurikulum']    || '';
-    document.getElementById('f_daya_tampung').value     = d.dayaTampung || d['daya_tampung'] || '';
-    document.getElementById('f_is_mbkm').value          = d.isMbkm   || d['is_mbkm']         || '0';
+    document.getElementById('f_kelas_ids').value         = d.kelasIds  || d['kelas_ids']        || '';
+    document.getElementById('f_kelas_detail_json').value = d.kelasDetail || d['kelas_detail_json'] || '';
+    document.getElementById('f_kode_mata_kuliah').value  = d.kode      || d['kode_mata_kuliah'] || '';
+    document.getElementById('f_nama_mata_kuliah').value  = d.nama      || d['nama_mata_kuliah'] || '';
+    document.getElementById('f_nama_kelas').value        = d.kelas     || d['nama_kelas']       || '';
+    document.getElementById('f_sks_siakad').value        = d.sks       || d['sks_siakad']       || '';
+    document.getElementById('f_id_periode').value        = d.periode   || d['id_periode']       || '';
+    document.getElementById('f_periode_label').value     = d.periodeLabel || d['periode_label'] || '';
+    document.getElementById('f_program_studi').value     = d.prodi     || d['program_studi']    || '';
+    document.getElementById('f_id_program_studi').value  = d.prodiId   || d['id_program_studi'] || '';
+    document.getElementById('f_jenjang').value           = d.jenjang   || d['jenjang']          || '';
+    document.getElementById('f_id_kurikulum').value      = d.kurikulum || d['id_kurikulum']     || '';
+    document.getElementById('f_daya_tampung').value      = d.dayaTampung || d['daya_tampung']   || '';
+    document.getElementById('f_is_mbkm').value           = d.isMbkm    || d['is_mbkm']          || '0';
 
     const sks = d.sks || d['sks_siakad'] || '';
     document.getElementById('info_nama_mk').textContent    = d.nama    || d['nama_mata_kuliah'] || '—';
     document.getElementById('info_kode_mk').textContent    = d.kode    || d['kode_mata_kuliah'] || '—';
-    document.getElementById('info_kelas').textContent      = 'Kelas ' + (d.kelas || d['nama_kelas'] || '—');
-    document.getElementById('info_prodi').textContent      = d.prodi   || d['program_studi']   || '—';
+    document.getElementById('info_kelas').textContent      = d.kelas   || d['nama_kelas']       || '—';
+    document.getElementById('info_prodi').textContent      = d.prodi   || d['program_studi']    || '—';
     document.getElementById('info_periode').textContent    = d.periodeLabel || d['periode_label'] || '—';
     document.getElementById('info_sks_siakad').textContent = sks + ' SKS';
 
-    // SKS pengusul: pakai old value jika ada (validasi error), else dari API
     const sksPengusul = document.getElementById('f_sks_pengusul');
     if (!sksPengusul.value) sksPengusul.value = sks;
 }
 
 document.querySelectorAll('.btn-klaim').forEach(function(btn) {
     btn.addEventListener('click', function() {
-        // Reset file input & label
         document.getElementById('sk_mengajar').value = '';
         document.querySelector('label[for="sk_mengajar"]').textContent = 'Pilih file SK...';
         document.getElementById('f_sks_pengusul').value = '';
@@ -417,11 +417,10 @@ document.querySelectorAll('.btn-klaim').forEach(function(btn) {
     });
 });
 
-// ── Auto-buka modal jika ada error validasi (redirect back) ──────────────
+// ── Auto-buka modal jika ada error validasi ──────────────────────────────────
 @if($errors->any() || session('open_modal_klaim'))
-    // Ambil data dari old() untuk isi kembali modal
     const oldData = {
-        'kelas_id_siakad':  '{{ old('kelas_id_siakad') }}',
+        'kelas_ids':        '{{ old('kelas_ids') }}',
         'kode_mata_kuliah': '{{ old('kode_mata_kuliah') }}',
         'nama_mata_kuliah': '{{ old('nama_mata_kuliah') }}',
         'nama_kelas':       '{{ old('nama_kelas') }}',
@@ -435,28 +434,24 @@ document.querySelectorAll('.btn-klaim').forEach(function(btn) {
         'daya_tampung':     '{{ old('daya_tampung') }}',
         'is_mbkm':          '{{ old('is_mbkm', '0') }}',
     };
-    // Set SKS pengusul dari old()
     document.getElementById('f_sks_pengusul').value = '{{ old('sks_pengusul') }}';
-
     isiModalKlaim(oldData);
 
-    // Buka modal setelah halaman selesai load
     document.addEventListener('DOMContentLoaded', function() {
         $('#modalKlaim').modal('show');
     });
-    // Fallback jika DOMContentLoaded sudah lewat
     if (document.readyState !== 'loading') {
         $('#modalKlaim').modal('show');
     }
 @endif
 
-// ── Update label custom file input ────────────────────────────────────────
+// ── Update label custom file input ───────────────────────────────────────────
 document.getElementById('sk_mengajar').addEventListener('change', function() {
     const label = document.querySelector('label[for="sk_mengajar"]');
     label.textContent = this.files.length > 0 ? this.files[0].name : 'Pilih file SK...';
 });
 
-// ── Loading state saat submit ─────────────────────────────────────────────
+// ── Loading state saat submit ────────────────────────────────────────────────
 document.getElementById('formKlaim').addEventListener('submit', function() {
     const btn = document.getElementById('btnSubmitKlaim');
     btn.disabled = true;
