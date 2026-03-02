@@ -44,15 +44,11 @@
                             <li class="{{ Request::is('kelas-mengajar*') ? 'active' : '' }}">
                                 <a href="{{ route('kelas-mengajar.index') }}"><i class="dripicons-dot"></i>Kelas Mengajar</a>
                             </li>
+                            <li class="{{ Request::is('matkul-pengajar*') ? 'active' : '' }}">
+                                <a href="{{ route('matkul-pengajar.index') }}"><i class="dripicons-dot"></i>Mata Kuliah Pengajar</a>
+                            </li>
                         </ul>
                     </li><!--end has-submenu-->
-
-                    <li class="{{ Request::is('matkul-pengajar*') ? 'active' : '' }}">
-                        <a href="{{ route('matkul-pengajar.index') }}">
-                            <i class="dripicons-graduation"></i>
-                            <span>Mata Kuliah Pengajar</span>
-                        </a>
-                    </li>
 
                 </ul><!-- End navigation menu -->
             </div> <!-- end navigation -->
