@@ -100,6 +100,58 @@
     </div>
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
+    {{-- MODAL: UPLOAD SK PER PERIODE                                           --}}
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="modalUploadSk" tabindex="-1" role="dialog"
+         aria-labelledby="modalUploadSkLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalUploadSkLabel">
+                        <i class="fas fa-upload mr-2"></i>
+                        Upload SK Mengajar — <span id="uploadSk_periodeLabel">...</span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 mb-3">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        SK ini akan digunakan untuk semua klaim matkul di semester
+                        <strong id="uploadSk_periodeLabelInfo">ini</strong>.
+                        Cukup upload <strong>satu kali</strong>.
+                    </div>
+
+                    {{-- Info SK existing jika ada --}}
+                    <div id="uploadSk_existingInfo" class="alert alert-success py-2 mb-3 d-none">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        SK tersedia: <strong id="uploadSk_existingName"></strong>
+                        — upload file baru untuk mengganti.
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">File SK Mengajar <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="uploadSkFile"
+                                   accept=".pdf,.jpg,.jpeg,.png,.docx">
+                            <label class="custom-file-label" for="uploadSkFile">Pilih file SK...</label>
+                        </div>
+                        <small class="text-muted">Format: PDF, JPG, PNG, DOCX — Maks. 5 MB</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnDoUploadSk">
+                        <i class="fas fa-upload mr-1"></i>Upload SK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- /.modal upload SK --}}
+
+    {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- KELAS PER PERIODE                                                     --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
 
@@ -141,13 +193,47 @@
                             <strong>{{ $periodeLabel }}</strong>
                             <span class="text-muted ml-2 small">({{ $idPeriode }})</span>
                         </span>
-                        <span>
+                        <span class="d-flex align-items-center">
                             <span class="badge badge-primary mr-1">{{ $matkulGroups->count() }} MK</span>
                             <span class="badge badge-info mr-1">{{ $kelasCount }} kelas</span>
                             <span class="badge badge-success mr-1">{{ $totalSksPeriode }} SKS</span>
                             @if($diklaimCount > 0)
                                 <span class="badge badge-warning mr-2">{{ $diklaimCount }} diklaim</span>
                             @endif
+                            {{-- Badge status SK per periode --}}
+                            @if(isset($skPerPeriode[$idPeriode]))
+                                <span class="badge badge-light border text-success mr-1 sk-badge-periode"
+                                      data-periode="{{ $idPeriode }}"
+                                      title="{{ $skPerPeriode[$idPeriode]['original_name'] }}">
+                                    <i class="fas fa-paperclip mr-1"></i>SK Tersedia
+                                </span>
+                                <a href="{{ route('matkul-pengajar.sk-download', $skPerPeriode[$idPeriode]['id']) }}"
+                                   target="_blank"
+                                   class="badge badge-light border text-primary mr-2 sk-link-periode"
+                                   data-periode="{{ $idPeriode }}"
+                                   onclick="event.stopPropagation()"
+                                   title="Lihat/download SK Mengajar">
+                                    <i class="fas fa-eye mr-1"></i>Lihat SK
+                                </a>
+                            @else
+                                <span class="badge badge-light border text-warning mr-2 sk-badge-periode"
+                                      data-periode="{{ $idPeriode }}">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>Belum ada SK
+                                </span>
+                            @endif
+                            {{-- Tombol Upload SK (stop propagation agar tidak toggle accordion) --}}
+                            <button type="button"
+                                    class="btn btn-xs btn-outline-secondary btn-upload-sk mr-2"
+                                    title="Upload SK Mengajar untuk semester ini"
+                                    data-periode="{{ $idPeriode }}"
+                                    data-periode-label="{{ $periodeLabel }}"
+                                    @if(isset($skPerPeriode[$idPeriode]))
+                                        data-sk-existing="{{ $skPerPeriode[$idPeriode]['original_name'] }}"
+                                    @endif
+                                    onclick="event.stopPropagation(); bukaBtnUploadSk(this)">
+                                <i class="fas fa-upload mr-1"></i>
+                                {{ isset($skPerPeriode[$idPeriode]) ? 'Ganti SK' : 'Upload SK' }}
+                            </button>
                             <i class="fas fa-chevron-down small text-muted"></i>
                         </span>
                     </button>
@@ -317,7 +403,7 @@
                             </div>
                         </div>
 
-                        {{-- ── SKS Pengusul (editable) ─────────────────────────────────── --}}
+                        {{-- SKS Pengusul (editable, max = sks SIAKAD) --}}
                         <div class="form-group row">
                             <label class="col-sm-4 col-form-label font-weight-bold">
                                 SKS Sesuai SK Mengajar <span class="text-danger">*</span>
@@ -334,22 +420,30 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <small class="text-muted">
-                                    Isi sesuai jumlah SKS di SK Mengajar (boleh berbeda dari SIAKAD).
+                                <small class="text-muted" id="info_sks_hint">
+                                    Maks. <strong id="info_sks_max">&mdash;</strong> SKS sesuai data SIAKAD.
+                                    Boleh dikurangi, <em>tidak boleh ditambah</em>.
                                 </small>
                             </div>
                         </div>
 
-                        {{-- ── Upload SK Mengajar ──────────────────────────────────────── --}}
+                        {{-- Upload SK Mengajar (opsional jika periode sudah punya SK) --}}
                         <div class="form-group row mb-0">
                             <label class="col-sm-4 col-form-label font-weight-bold">
-                                Upload SK Mengajar <span class="text-danger">*</span>
+                                SK Mengajar
+                                <span class="text-danger" id="lbl_sk_required">*</span>
                             </label>
                             <div class="col-sm-8">
+                                {{-- Info SK existing jika periode ini sudah punya SK --}}
+                                <div id="sk_existing_info" class="alert alert-success py-1 px-2 mb-2 d-none small">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    SK tersedia: <strong id="sk_existing_name"></strong>
+                                    &mdash; upload baru untuk mengganti, atau biarkan untuk menggunakan ini.
+                                </div>
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input @error('sk_mengajar') is-invalid @enderror"
                                            id="sk_mengajar" name="sk_mengajar"
-                                           accept=".pdf,.jpg,.jpeg,.png,.docx" required>
+                                           accept=".pdf,.jpg,.jpeg,.png,.docx">
                                     <label class="custom-file-label" for="sk_mengajar">
                                         Pilih file SK...
                                     </label>
@@ -357,7 +451,7 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <small class="text-muted">Format: PDF, JPG, PNG, DOCX — Maks. 5 MB</small>
+                                <small class="text-muted">Format: PDF, JPG, PNG, DOCX &mdash; Maks. 5 MB</small>
                             </div>
                         </div>
                     </div>
@@ -377,7 +471,159 @@
 
 @push('scripts')
 <script>
-// ── Isi modal klaim ─────────────────────────────────────────────────────────
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// [A] SK Per Periode: state yang dikelola di JS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Map: id_periode → { id, original_name, size_readable, uploaded_at} (dari DB, permanen)
+const skPerPeriodeServer = @json($skPerPeriode);
+
+// Route template untuk download SK (diisi id nanti)
+const skDownloadBaseUrl = '{{ url('matkul-pengajar/sk') }}';
+
+function getSkForPeriode(idPeriode) {
+    return skPerPeriodeServer[idPeriode] || null;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// [B] Modal Upload SK per Periode
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+let uploadSkPeriodeTarget = null; // id_periode yang sedang di-upload
+
+function bukaBtnUploadSk(btn) {
+    uploadSkPeriodeTarget = btn.dataset.periode;
+    const label = btn.dataset.periodeLabel || uploadSkPeriodeTarget;
+    document.getElementById('uploadSk_periodeLabel').textContent     = label;
+    document.getElementById('uploadSk_periodeLabelInfo').textContent = label;
+
+    // Reset file input
+    document.getElementById('uploadSkFile').value = '';
+    document.querySelector('label[for="uploadSkFile"]').textContent = 'Pilih file SK...';
+
+    // Tampilkan info SK existing jika ada
+    const existing = getSkForPeriode(uploadSkPeriodeTarget);
+    const infoDiv   = document.getElementById('uploadSk_existingInfo');
+    if (existing) {
+        document.getElementById('uploadSk_existingName').textContent = existing.original_name;
+        infoDiv.classList.remove('d-none');
+    } else {
+        infoDiv.classList.add('d-none');
+    }
+
+    $('#modalUploadSk').modal('show');
+}
+
+document.getElementById('uploadSkFile').addEventListener('change', function() {
+    const label = document.querySelector('label[for="uploadSkFile"]');
+    label.textContent = this.files.length > 0 ? this.files[0].name : 'Pilih file SK...';
+});
+
+document.getElementById('btnDoUploadSk').addEventListener('click', function() {
+    const file = document.getElementById('uploadSkFile').files[0];
+    if (!file) {
+        alert('Pilih file terlebih dahulu.');
+        return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Mengupload...';
+
+    const formData = new FormData();
+    formData.append('sk_file', file);
+    formData.append('id_periode', uploadSkPeriodeTarget);
+    formData.append('periode_label', document.getElementById('uploadSk_periodeLabelInfo').textContent || '');
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.content
+        || '{{ csrf_token() }}');
+
+    fetch('{{ route('matkul-pengajar.upload-sk') }}', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-upload mr-1"></i>Upload SK';
+
+        if (data.success) {
+            // Update state lokal
+            skPerPeriodeServer[data.id_periode] = {
+                id:            data.id,
+                original_name: data.original_name,
+                size_readable: data.size_readable,
+                uploaded_at:   data.uploaded_at,
+            };
+
+            // Update badge + tambah link Lihat SK di accordion header
+            updateSkBadge(data.id_periode, data.original_name, data.id);
+
+            $('#modalUploadSk').modal('hide');
+
+            // Toast notifikasi sukses
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success alert-dismissible fade show';
+            toast.style.cssText = 'position:fixed;top:70px;right:20px;z-index:9999;min-width:300px';
+            toast.innerHTML = '<i class="fas fa-check-circle mr-2"></i>'
+                + 'SK berhasil disimpan: <strong>' + data.original_name + '</strong>'
+                + ' <small class="text-muted">(' + data.size_readable + ')</small>'
+                + '<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        } else {
+            alert('Gagal upload: ' + (data.message || 'Error tidak diketahui'));
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-upload mr-1"></i>Upload SK';
+        alert('Terjadi kesalahan saat upload. Coba lagi.');
+    });
+});
+
+function updateSkBadge(idPeriode, namaFile, skId) {
+    // Update badge status
+    const badges = document.querySelectorAll('.sk-badge-periode[data-periode="' + idPeriode + '"]');
+    badges.forEach(badge => {
+        badge.className = 'badge badge-light border text-success mr-1 sk-badge-periode';
+        badge.setAttribute('title', namaFile);
+        badge.innerHTML = '<i class="fas fa-paperclip mr-1"></i>SK Tersedia';
+    });
+
+    // Tambah / update link Lihat SK
+    const existingLinks = document.querySelectorAll('.sk-link-periode[data-periode="' + idPeriode + '"]');
+    if (existingLinks.length > 0) {
+        existingLinks.forEach(link => {
+            link.href = skDownloadBaseUrl + '/' + skId;
+            link.setAttribute('title', 'Lihat/download: ' + namaFile);
+        });
+    } else if (skId) {
+        // Buat link baru setelah badge
+        badges.forEach(badge => {
+            const link = document.createElement('a');
+            link.href       = skDownloadBaseUrl + '/' + skId;
+            link.target     = '_blank';
+            link.className  = 'badge badge-light border text-primary mr-2 sk-link-periode';
+            link.dataset.periode = idPeriode;
+            link.title      = 'Lihat/download: ' + namaFile;
+            link.setAttribute('onclick', 'event.stopPropagation()');
+            link.innerHTML  = '<i class="fas fa-eye mr-1"></i>Lihat SK';
+            badge.insertAdjacentElement('afterend', link);
+        });
+    }
+
+    // Ubah teks tombol Upload SK → Ganti SK
+    const uploadBtns = document.querySelectorAll('.btn-upload-sk[data-periode="' + idPeriode + '"]');
+    uploadBtns.forEach(btn => {
+        btn.dataset.skExisting = namaFile;
+        btn.innerHTML = '<i class="fas fa-upload mr-1"></i>Ganti SK';
+    });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// [C] Modal Klaim
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function isiModalKlaim(d) {
     document.getElementById('f_kelas_ids').value         = d.kelasIds  || d['kelas_ids']        || '';
     document.getElementById('f_kelas_detail_json').value = d.kelasDetail || d['kelas_detail_json'] || '';
@@ -394,7 +640,10 @@ function isiModalKlaim(d) {
     document.getElementById('f_daya_tampung').value      = d.dayaTampung || d['daya_tampung']   || '';
     document.getElementById('f_is_mbkm').value           = d.isMbkm    || d['is_mbkm']          || '0';
 
-    const sks = d.sks || d['sks_siakad'] || '';
+    const sks         = parseInt(d.sks || d['sks_siakad'] || 20);
+    const idPeriode   = d.periode || d['id_periode'] || '';
+    const skPengusul  = document.getElementById('f_sks_pengusul');
+
     document.getElementById('info_nama_mk').textContent    = d.nama    || d['nama_mata_kuliah'] || '—';
     document.getElementById('info_kode_mk').textContent    = d.kode    || d['kode_mata_kuliah'] || '—';
     document.getElementById('info_kelas').textContent      = d.kelas   || d['nama_kelas']       || '—';
@@ -402,8 +651,31 @@ function isiModalKlaim(d) {
     document.getElementById('info_periode').textContent    = d.periodeLabel || d['periode_label'] || '—';
     document.getElementById('info_sks_siakad').textContent = sks + ' SKS';
 
-    const sksPengusul = document.getElementById('f_sks_pengusul');
-    if (!sksPengusul.value) sksPengusul.value = sks;
+    // Set max SKS pengusul = sks SIAKAD (tidak boleh melebihi)
+    skPengusul.max = sks;
+    document.getElementById('info_sks_max').textContent = sks;
+    if (!skPengusul.value || parseInt(skPengusul.value) > sks) {
+        skPengusul.value = sks;
+    }
+
+    // Cek apakah SK sudah tersedia untuk periode ini
+    const skExisting   = getSkForPeriode(idPeriode);
+    const skInfoDiv    = document.getElementById('sk_existing_info');
+    const skInput      = document.getElementById('sk_mengajar');
+    const lblRequired  = document.getElementById('lbl_sk_required');
+
+    if (skExisting) {
+        document.getElementById('sk_existing_name').textContent = skExisting.original_name;
+        skInfoDiv.classList.remove('d-none');
+        // SK sudah ada → upload tidak wajib
+        skInput.removeAttribute('required');
+        lblRequired.classList.add('d-none');
+    } else {
+        skInfoDiv.classList.add('d-none');
+        // Belum ada SK → upload wajib
+        skInput.setAttribute('required', 'required');
+        lblRequired.classList.remove('d-none');
+    }
 }
 
 document.querySelectorAll('.btn-klaim').forEach(function(btn) {

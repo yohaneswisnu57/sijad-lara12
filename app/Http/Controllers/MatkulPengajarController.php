@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\DTOs\KelasDTO;
 use App\Models\KelasMengajar;
+use App\Models\SkPeriode;
 use App\Services\DosenSiakadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +93,21 @@ class MatkulPengajarController extends Controller
         // Jumlah mata kuliah unik (kode + sks)
         $totalMatkul = $kelasList->groupBy(fn (KelasDTO $k) => $k->kodeMatKul . '|' . $k->sks)->count();
 
+        // ── SK per Periode dari DB (tr_sk_periodes) ───────────────────────────
+        // Permanen, tidak bergantung session. Hanya milik user ini.
+        $skPerPeriode = SkPeriode::forUser($nip)
+            ->get()
+            ->keyBy('id_periode')
+            ->map(fn ($item) => [
+                'id'            => $item->id,
+                'path'          => $item->sk_path,
+                'original_name' => $item->sk_original_name,
+                'size'          => $item->sk_size,
+                'size_readable' => $item->size_readable,
+                'uploaded_at'   => $item->uploaded_at?->format('d M Y, H:i'),
+            ])
+            ->toArray();
+
         return view('pages.matkul-pengajar.index', compact(
             'kelasList',
             'grouped',
@@ -105,6 +121,7 @@ class MatkulPengajarController extends Controller
             'sudahDiklaim',
             'dosenError',
             'apiError',
+            'skPerPeriode',
         ));
     }
 
@@ -124,12 +141,16 @@ class MatkulPengajarController extends Controller
      */
     public function klaim(Request $request)
     {
+        // Validasi dasar (sk_mengajar opsional — bisa pakai SK dari session/DB)
+        $sksSiakad = (int) $request->input('sks_siakad', 20);
+
         $validated = $request->validate([
-            'kelas_ids'        => 'required|string',       // comma-separated kelas IDs
+            'kelas_ids'        => 'required|string',
             'kode_mata_kuliah' => 'required|string|max:50',
             'nama_mata_kuliah' => 'required|string|max:255',
-            'nama_kelas'       => 'required|string|max:255', // "A, B, C" gabungan
-            'sks_pengusul'     => 'required|integer|min:1|max:20',
+            'nama_kelas'       => 'required|string|max:255',
+            // sks_pengusul max = sks_siakad (tidak boleh menambah dari SIAKAD)
+            'sks_pengusul'     => "required|integer|min:1|max:{$sksSiakad}",
             'id_periode'       => 'required|string|max:10',
             'periode_label'    => 'nullable|string|max:50',
             'program_studi'    => 'nullable|string|max:255',
@@ -139,7 +160,8 @@ class MatkulPengajarController extends Controller
             'sks_siakad'       => 'nullable|integer',
             'daya_tampung'     => 'nullable|integer',
             'is_mbkm'          => 'nullable|boolean',
-            'sk_mengajar'      => 'required|file|mimes:pdf,jpg,jpeg,png,docx|max:5120',
+            // File SK opsional jika sudah ada di session
+            'sk_mengajar'      => 'nullable|file|mimes:pdf,jpg,jpeg,png,docx|max:5120',
         ]);
 
         $user     = Auth::user();
@@ -167,18 +189,56 @@ class MatkulPengajarController extends Controller
         // Resolve SEVIMA ID dari cache
         $siakadId = $this->dosenService->resolveSiakadId($nip);
 
-        // Upload SK Mengajar ke private storage (1 file untuk semua kelas group)
-        $file       = $request->file('sk_mengajar');
-        $tahun      = substr($validated['id_periode'], 0, 4);
-        $fileName   = date('YmdHis') . '_' . $nip . '.' . $file->getClientOriginalExtension();
-        $folderPath = "sk_mengajar/{$nip}/{$tahun}";
-        $storedPath = $file->storeAs($folderPath, $fileName, 'private');
+        // ── Resolve file SK Mengajar ─────────────────────────────────────────
+        // Prioritas: (1) upload baru, (2) session, (3) DB existing
+        $skOriginalName = null;
+        $skMime         = null;
+        $skSize         = null;
+        $storedPath     = null;
 
-        if (!$storedPath) {
-            return back()
-                ->withInput()
-                ->with('open_modal_klaim', true)
-                ->with('error', 'Gagal menyimpan file SK Mengajar. Hubungi administrator.');
+        if ($request->hasFile('sk_mengajar')) {
+            // Upload file baru
+            $file       = $request->file('sk_mengajar');
+            $tahun      = substr($validated['id_periode'], 0, 4);
+            $fileName   = date('YmdHis') . '_' . $nip . '.' . $file->getClientOriginalExtension();
+            $folderPath = "sk_mengajar/{$nip}/{$tahun}";
+            $storedPath = $file->storeAs($folderPath, $fileName, 'private');
+            $skOriginalName = $file->getClientOriginalName();
+            $skMime         = $file->getMimeType();
+            $skSize         = $file->getSize();
+
+            if (!$storedPath) {
+                return back()->withInput()->with('open_modal_klaim', true)
+                    ->with('error', 'Gagal menyimpan file SK Mengajar. Hubungi administrator.');
+            }
+
+            // Simpan/update ke tr_sk_periodes (permanen)
+            SkPeriode::updateOrCreate(
+                ['user_id' => $nip, 'id_periode' => $validated['id_periode']],
+                [
+                    'periode_label'  => $validated['periode_label'] ?? null,
+                    'sk_path'        => $storedPath,
+                    'sk_original_name' => $skOriginalName,
+                    'sk_mime'        => $skMime,
+                    'sk_size'        => $skSize,
+                    'uploaded_at'    => now(),
+                ]
+            );
+        } else {
+            // Cari SK dari tr_sk_periodes (permanen)
+            $skRecord = SkPeriode::forUser($nip)
+                ->where('id_periode', $validated['id_periode'])
+                ->first();
+
+            if ($skRecord) {
+                $storedPath     = $skRecord->sk_path;
+                $skOriginalName = $skRecord->sk_original_name;
+                $skSize         = $skRecord->sk_size;
+                $skMime         = $skRecord->sk_mime;
+            } else {
+                return back()->withInput()->with('open_modal_klaim', true)
+                    ->with('error', 'SK Mengajar belum diupload untuk semester ini. Silakan upload SK terlebih dahulu.');
+            }
         }
 
         // Parse detail kelas dari JSON (kelas_detail) untuk nama kelas individual
@@ -215,9 +275,9 @@ class MatkulPengajarController extends Controller
                 'source'                    => 'siakad',
                 'status'                    => 'aktif',
                 'sk_mengajar_path'          => $storedPath,
-                'sk_mengajar_original_name' => $file->getClientOriginalName(),
-                'sk_mengajar_mime'          => $file->getMimeType(),
-                'sk_mengajar_size'          => $file->getSize(),
+                'sk_mengajar_original_name' => $skOriginalName,
+                'sk_mengajar_mime'          => $skMime,
+                'sk_mengajar_size'          => $skSize,
                 'diklaim_at'                => $now,
             ]);
         }
@@ -228,6 +288,81 @@ class MatkulPengajarController extends Controller
         return redirect()
             ->route('matkul-pengajar.index', $periode ? ['periode' => $periode] : [])
             ->with('success', "{$validated['kode_mata_kuliah']} - {$validated['nama_mata_kuliah']} berhasil diklaim ({$jumlah} kelas)!");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // UPLOAD SK PER PERIODE
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Upload SK Mengajar untuk satu periode (tanpa klaim matkul).
+     * File disimpan ke private storage & record disimpan PERMANEN di tr_sk_periodes.
+     * Dipakai saat user klaim matkul berikutnya di periode yang sama.
+     */
+    public function uploadSk(Request $request)
+    {
+        $request->validate([
+            'id_periode'   => 'required|string|max:10',
+            'periode_label' => 'nullable|string|max:50',
+            'sk_file'      => 'required|file|mimes:pdf,jpg,jpeg,png,docx|max:5120',
+        ]);
+
+        $nip    = Auth::user()->userid;
+        $file   = $request->file('sk_file');
+        $tahun  = substr($request->id_periode, 0, 4);
+        $name   = date('YmdHis') . '_' . $nip . '.' . $file->getClientOriginalExtension();
+        $folder = "sk_mengajar/{$nip}/{$tahun}";
+        $path   = $file->storeAs($folder, $name, 'private');
+
+        if (!$path) {
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan file.'], 500);
+        }
+
+        // Simpan/update PERMANEN ke tr_sk_periodes
+        $record = SkPeriode::updateOrCreate(
+            ['user_id' => $nip, 'id_periode' => $request->id_periode],
+            [
+                'periode_label'   => $request->periode_label ?? KelasDTO::formatPeriode($request->id_periode),
+                'sk_path'         => $path,
+                'sk_original_name' => $file->getClientOriginalName(),
+                'sk_mime'         => $file->getMimeType(),
+                'sk_size'         => $file->getSize(),
+                'uploaded_at'     => now(),
+            ]
+        );
+
+        return response()->json([
+            'success'       => true,
+            'id'            => $record->id,
+            'id_periode'    => $request->id_periode,
+            'original_name' => $file->getClientOriginalName(),
+            'size'          => $file->getSize(),
+            'size_readable' => $record->size_readable,
+            'uploaded_at'   => $record->uploaded_at->format('d M Y, H:i'),
+        ]);
+    }
+
+    /**
+     * Download/view SK Mengajar dari tr_sk_periodes.
+     * Hanya pemilik yang boleh akses (cek user_id).
+     */
+    public function downloadSk(SkPeriode $skPeriode)
+    {
+        $nip = Auth::user()->userid;
+
+        if ($skPeriode->user_id !== $nip) {
+            abort(403, 'Anda tidak berhak mengakses file ini.');
+        }
+
+        if (!Storage::disk('private')->exists($skPeriode->sk_path)) {
+            abort(404, 'File tidak ditemukan di storage.');
+        }
+
+        return Storage::disk('private')->response(
+            $skPeriode->sk_path,
+            $skPeriode->sk_original_name,
+            ['Content-Type' => $skPeriode->sk_mime ?? 'application/octet-stream']
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────
