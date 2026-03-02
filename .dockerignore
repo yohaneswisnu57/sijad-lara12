@@ -1,0 +1,35 @@
+# Dependensi (di-copy dari multi-stage, tidak perlu masuk image)
+node_modules
+vendor
+
+# File development
+.git
+.gitignore
+.editorconfig
+.nvmrc
+.vscode
+.cursor
+*.md
+
+# File environment (JANGAN commit ke git!)
+.env
+.env.*
+!.env.example
+
+# Test & tooling
+tests
+phpunit.xml
+*.test
+*.spec
+
+# Docker (tidak perlu masuk image itu sendiri)
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+
+# Logs lokal
+storage/logs/*.log
+
+# OS files
+.DS_Store
+Thumbs.db
