@@ -45,7 +45,7 @@
                                     </div><!--end auth-logo-box-->
 
                                     <div class="text-center auth-logo-text">
-                                        <h4 class="mt-0 mb-1 mt-5">SIJAD — UKWMS</h4>
+                                        <h4 class="mb-1 mt-5">SIJAD — UKWMS</h4>
                                         <p class="text-muted mb-0">
                                             Sistem Informasi Jabatan Akademik Dosen<br>
                                             <small>Masuk untuk melanjutkan</small>
