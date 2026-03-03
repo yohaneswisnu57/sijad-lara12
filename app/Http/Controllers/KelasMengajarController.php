@@ -5,16 +5,13 @@ namespace App\Http\Controllers;
 use App\DTOs\KelasDTO;
 use App\Exceptions\SiakadApiException;
 use App\Models\KelasMengajar;
-use App\Repositories\Contracts\KelasRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class KelasMengajarController extends Controller
 {
-    public function __construct(
-        private readonly KelasRepositoryInterface $kelasRepository
-    ) {}
+    public function __construct() {}
 
     // ──────────────────────────────────────────────────────────────────────────
     // INDEX: Halaman utama — lihat kelas dari SIAKAD + yang sudah diklaim
@@ -23,26 +20,17 @@ class KelasMengajarController extends Controller
     /**
      * Menampilkan halaman daftar kelas mengajar.
      *
-     * Tiga bagian:
-     * 1. Kelas dari SIAKAD yang BELUM diklaim (bisa di-klaim)
-     * 2. Kelas yang SUDAH diklaim (dari SIAKAD / manual aktif)
-     * 3. Pengajuan manual yang PENDING
+     * Dua bagian utama:
+     * 1. Kelas yang sudah diklaim (aktif/pending/ditolak)
+     * 2. Modal pengajuan manual
+     *
+     * Catatan: Klaim kelas dari SIAKAD kini dilakukan di halaman matkul-pengajar.
      */
     public function index(Request $request)
     {
         $user    = Auth::user();
         $nip     = $user->userid;
         $periode = $request->get('periode', '');
-
-        // ── Ambil daftar kelas dari API SEVIMA ──────────────────────────────
-        $kelasApiList = collect();
-        $apiError     = null;
-
-        try {
-            $kelasApiList = $this->kelasRepository->getByDosen($nip, $periode);
-        } catch (\Exception $e) {
-            $apiError = 'Gagal mengambil data dari SIAKAD: ' . $e->getMessage();
-        }
 
         // ── Ambil kelas yang sudah diklaim dari DB ───────────────────────────
         $dbQuery = KelasMengajar::forUser($nip)->orderByDesc('diklaim_at');
@@ -51,19 +39,7 @@ class KelasMengajarController extends Controller
         }
         $kelasDiklaim = $dbQuery->get();
 
-        // ── ID kelas SIAKAD yang sudah diklaim (untuk highlight/filter) ──────
-        $idSudahDiklaim = $kelasDiklaim
-            ->whereNotNull('kelas_id_siakad')
-            ->pluck('kelas_id_siakad')
-            ->map(fn ($v) => (string) $v)
-            ->toArray();
-
-        // ── Split kelas API: belum diklaim vs sudah diklaim ──────────────────
-        $kelasBelumDiklaim = $kelasApiList->filter(
-            fn (KelasDTO $k) => !in_array((string) $k->id, $idSudahDiklaim)
-        );
-
-        $kelasAktif  = $kelasDiklaim->where('status', 'aktif');
+        $kelasAktif   = $kelasDiklaim->where('status', 'aktif');
         $kelasPending = $kelasDiklaim->where('status', 'pending');
         $kelasDitolak = $kelasDiklaim->where('status', 'ditolak');
 
@@ -71,13 +47,11 @@ class KelasMengajarController extends Controller
         $periodeList = $this->buildPeriodeList();
 
         return view('pages.kelas-mengajar.index', compact(
-            'kelasBelumDiklaim',
             'kelasAktif',
             'kelasPending',
             'kelasDitolak',
             'periodeList',
             'periode',
-            'apiError',
         ));
     }
 

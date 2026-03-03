@@ -37,36 +37,36 @@
 
     {{-- ── Statistik ───────────────────────────────────────────────────────── --}}
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col-6 col-md-3 mb-2 mb-md-0">
             <div class="card shadow-sm text-center py-3">
                 <div class="text-muted small mb-1">Mata Kuliah</div>
                 <div class="h2 font-weight-bold text-primary mb-0">{{ $totalMatkul }}</div>
-                <div class="text-muted small">mata kuliah unik</div>
+                <div class="text-muted small">MK unik</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3 mb-2 mb-md-0">
             <div class="card shadow-sm text-center py-3">
                 <div class="text-muted small mb-1">Total Kelas</div>
                 <div class="h2 font-weight-bold text-info mb-0">{{ $totalKelas }}</div>
-                <div class="text-muted small">kelas (semua semester)</div>
+                <div class="text-muted small">semua semester</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card shadow-sm text-center py-3">
                 <div class="text-muted small mb-1">Total SKS</div>
                 <div class="h2 font-weight-bold text-success mb-0">{{ $totalSks }}</div>
-                <div class="text-muted small">SKS (semua periode)</div>
+                <div class="text-muted small">semua periode</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
             <div class="card shadow-sm text-center py-3">
                 <div class="text-muted small mb-1">NIP Login</div>
-                <div class="h5 font-weight-bold text-dark mb-0">{{ $nip }}</div>
+                <div class="h6 font-weight-bold text-dark mb-0" style="font-size:0.8rem">{{ $nip }}</div>
                 <form action="{{ route('matkul-pengajar.refresh') }}" method="POST" class="d-inline">
                     @csrf
                     @if($periode) <input type="hidden" name="periode" value="{{ $periode }}"> @endif
                     <button type="submit" class="btn btn-xs btn-outline-secondary mt-1">
-                        <i class="fas fa-sync-alt mr-1"></i>Refresh Data
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
                     </button>
                 </form>
             </div>
@@ -76,25 +76,28 @@
     {{-- ── Filter Periode ──────────────────────────────────────────────────── --}}
     <div class="card shadow-sm mb-3">
         <div class="card-body py-2">
-            <form method="GET" action="{{ route('matkul-pengajar.index') }}" class="d-flex align-items-center flex-wrap">
-                <label class="mb-0 font-weight-bold text-muted small mr-2">Filter Semester:</label>
-                <select name="periode" class="form-control form-control-sm mr-2" style="width:auto;min-width:210px"
-                        onchange="this.form.submit()">
-                    <option value="">— Semua Semester —</option>
-                    @foreach($periodeFromApi as $kode => $label)
-                        <option value="{{ $kode }}" {{ $periode == $kode ? 'selected' : '' }}>
-                            {{ $label }} ({{ $kode }})
-                        </option>
-                    @endforeach
-                </select>
-                @if($periode)
-                    <a href="{{ route('matkul-pengajar.index') }}" class="btn btn-sm btn-light ml-1">
-                        <i class="fas fa-times mr-1"></i>Reset
-                    </a>
-                    <span class="badge badge-primary ml-2 px-3 py-2">
-                        {{ $periodeFromApi[$periode] ?? $periode }}
-                    </span>
-                @endif
+            <form method="GET" action="{{ route('matkul-pengajar.index') }}">
+                <div class="d-flex align-items-center flex-wrap" style="gap:8px">
+                    <label class="mb-0 font-weight-bold text-muted small">Filter Semester:</label>
+                    <select name="periode" class="form-control form-control-sm"
+                            style="flex:1;min-width:180px;max-width:280px"
+                            onchange="this.form.submit()">
+                        <option value="">— Semua Semester —</option>
+                        @foreach($periodeFromApi as $kode => $label)
+                            <option value="{{ $kode }}" {{ $periode == $kode ? 'selected' : '' }}>
+                                {{ $label }} ({{ $kode }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @if($periode)
+                        <a href="{{ route('matkul-pengajar.index') }}" class="btn btn-sm btn-light mr-1 mb-1">
+                            <i class="fas fa-times mr-1"></i>Reset
+                        </a>
+                        <span class="badge badge-primary px-3 py-2 mb-1">
+                            {{ $periodeFromApi[$periode] ?? $periode }}
+                        </span>
+                    @endif
+                </div>
             </form>
         </div>
     </div>
@@ -183,61 +186,77 @@
                 $diklaimCount    = $matkulGroups->flatten(1)->filter(fn ($k) => in_array((string)$k->id, $sudahDiklaim))->count();
             @endphp
             <div class="card shadow-sm mb-2">
-                <div class="card-header p-0">
-                    <button class="btn btn-link w-100 text-left px-3 py-2 d-flex align-items-center justify-content-between
-                                   {{ $firstPeriode ? '' : 'collapsed' }}"
+                {{-- ⚠️ card-header dibagi dua kolom: kiri = accordion toggle, kanan = aksi SK --}}
+                {{-- Ini menghindari nested <button> yang invalid HTML dan merusak layout mobile --}}
+                <div class="card-header p-0 d-flex align-items-stretch">
+
+                    {{-- Kolom kiri: toggle accordion (flex-grow, klik untuk buka/tutup) --}}
+                    <button class="btn btn-link flex-grow-1 text-left px-3 py-2 {{ $firstPeriode ? '' : 'collapsed' }}"
+                            style="min-width:0"
                             data-toggle="collapse" data-target="#{{ $collapseId }}"
                             aria-expanded="{{ $firstPeriode ? 'true' : 'false' }}">
-                        <span>
-                            <i class="fas fa-calendar-alt text-primary mr-2"></i>
-                            <strong>{{ $periodeLabel }}</strong>
-                            <span class="text-muted ml-2 small">({{ $idPeriode }})</span>
-                        </span>
-                        <span class="d-flex align-items-center">
-                            <span class="badge badge-primary mr-1">{{ $matkulGroups->count() }} MK</span>
-                            <span class="badge badge-info mr-1">{{ $kelasCount }} kelas</span>
-                            <span class="badge badge-success mr-1">{{ $totalSksPeriode }} SKS</span>
+
+                        {{-- Baris 1: label periode + icon chevron --}}
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar-alt text-primary mr-2 flex-shrink-0"></i>
+                            <strong class="mr-1">{{ $periodeLabel }}</strong>
+                            <span class="text-muted small d-none d-sm-inline">({{ $idPeriode }})</span>
+                            <i class="fas fa-chevron-down small text-muted ml-auto"></i>
+                        </div>
+
+                        {{-- Baris 2: badges info (tidak ada button/link di sini) --}}
+                        <div class="d-flex flex-wrap mt-1" style="gap:4px">
+                            <span class="badge badge-primary">{{ $matkulGroups->count() }} MK</span>
+                            <span class="badge badge-info">{{ $kelasCount }} kelas</span>
+                            <span class="badge badge-success">{{ $totalSksPeriode }} SKS</span>
                             @if($diklaimCount > 0)
-                                <span class="badge badge-warning mr-2">{{ $diklaimCount }} diklaim</span>
+                                <span class="badge badge-warning">{{ $diklaimCount }} diklaim</span>
                             @endif
-                            {{-- Badge status SK per periode --}}
+                            {{-- Badge status SK (hanya badge teks, bukan link/button) --}}
                             @if(isset($skPerPeriode[$idPeriode]))
-                                <span class="badge badge-light border text-success mr-1 sk-badge-periode"
+                                <span class="badge badge-light border text-success sk-badge-periode"
                                       data-periode="{{ $idPeriode }}"
                                       title="{{ $skPerPeriode[$idPeriode]['original_name'] }}">
                                     <i class="fas fa-paperclip mr-1"></i>SK Tersedia
                                 </span>
-                                <a href="{{ route('matkul-pengajar.sk-download', $skPerPeriode[$idPeriode]['id']) }}"
-                                   target="_blank"
-                                   class="badge badge-light border text-primary mr-2 sk-link-periode"
-                                   data-periode="{{ $idPeriode }}"
-                                   onclick="event.stopPropagation()"
-                                   title="Lihat/download SK Mengajar">
-                                    <i class="fas fa-eye mr-1"></i>Lihat SK
-                                </a>
                             @else
-                                <span class="badge badge-light border text-warning mr-2 sk-badge-periode"
+                                <span class="badge badge-light border text-warning sk-badge-periode"
                                       data-periode="{{ $idPeriode }}">
                                     <i class="fas fa-exclamation-circle mr-1"></i>Belum ada SK
                                 </span>
                             @endif
-                            {{-- Tombol Upload SK (stop propagation agar tidak toggle accordion) --}}
-                            <button type="button"
-                                    class="btn btn-xs btn-outline-secondary btn-upload-sk mr-2"
-                                    title="Upload SK Mengajar untuk semester ini"
-                                    data-periode="{{ $idPeriode }}"
-                                    data-periode-label="{{ $periodeLabel }}"
-                                    @if(isset($skPerPeriode[$idPeriode]))
-                                        data-sk-existing="{{ $skPerPeriode[$idPeriode]['original_name'] }}"
-                                    @endif
-                                    onclick="event.stopPropagation(); bukaBtnUploadSk(this)">
-                                <i class="fas fa-upload mr-1"></i>
-                                {{ isset($skPerPeriode[$idPeriode]) ? 'Ganti SK' : 'Upload SK' }}
-                            </button>
-                            <i class="fas fa-chevron-down small text-muted"></i>
-                        </span>
+                        </div>
+
                     </button>
-                </div>
+
+                    {{-- Kolom kanan: aksi SK — disandingkan, bukan di dalam <button> --}}
+                    <div class="d-flex flex-column align-items-center justify-content-center px-2 border-left"
+                         style="gap:4px; min-width:70px">
+                        @if(isset($skPerPeriode[$idPeriode]))
+                            <a href="{{ route('matkul-pengajar.sk-download', $skPerPeriode[$idPeriode]['id']) }}"
+                               target="_blank"
+                               class="btn btn-xs btn-outline-info sk-link-periode w-100 text-center"
+                               data-periode="{{ $idPeriode }}"
+                               title="Lihat/download SK">
+                                <i class="fas fa-eye"></i>
+                                <span class="d-none d-md-inline ml-1">Lihat SK</span>
+                            </a>
+                        @endif
+                        <button type="button"
+                                class="btn btn-xs btn-outline-secondary btn-upload-sk w-100"
+                                title="Upload SK Mengajar"
+                                data-periode="{{ $idPeriode }}"
+                                data-periode-label="{{ $periodeLabel }}"
+                                @if(isset($skPerPeriode[$idPeriode]))
+                                    data-sk-existing="{{ $skPerPeriode[$idPeriode]['original_name'] }}"
+                                @endif
+                                onclick="bukaBtnUploadSk(this)">
+                            <i class="fas fa-upload"></i>
+                            <span class="d-none d-md-inline ml-1">{{ isset($skPerPeriode[$idPeriode]) ? 'Ganti' : 'Upload' }} SK</span>
+                        </button>
+                    </div>
+
+                </div>{{-- /card-header --}}
 
                 <div id="{{ $collapseId }}" class="collapse {{ $firstPeriode ? 'show' : '' }}"
                      data-parent="#accordion-kelas">
@@ -249,35 +268,40 @@
                                     <th width="12%">Kode MK</th>
                                     <th>Nama Mata Kuliah</th>
                                     <th width="6%" class="text-center">SKS</th>
-                                    <th width="18%">Program Studi</th>
+                                    {{-- Program Studi: sembunyikan di mobile, tampilkan di md ke atas --}}
+                                    <th class="d-none d-md-table-cell">Program Studi</th>
                                     <th width="10%" class="text-center">Kelas</th>
-                                    <th width="12%" class="text-center">Status Klaim</th>
+                                    <th width="12%" class="text-center">Klaim</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($matkulGroups as $groupIdx => $kelasItems)
                                 @php
-                                    $first      = $kelasItems->first();
-                                    // Gabung nama kelas: A, B, C
+                                    $first           = $kelasItems->first();
                                     $namaKelasGabung = $kelasItems->pluck('namaKelas')->sort()->implode(', ');
-                                    // Semua ID kelas dalam group ini
-                                    $kelasIds   = $kelasItems->pluck('id')->map(fn($v) => (string)$v)->toArray();
-                                    // Cek apakah SEMUA kelas di group sudah diklaim
-                                    $allDiklaim = collect($kelasIds)->every(fn ($id) => in_array($id, $sudahDiklaim));
+                                    $kelasIds        = $kelasItems->pluck('id')->map(fn($v) => (string)$v)->toArray();
+                                    $allDiklaim      = collect($kelasIds)->every(fn ($id) => in_array($id, $sudahDiklaim));
                                 @endphp
                                 <tr class="{{ $allDiklaim ? 'table-success' : '' }}">
                                     <td class="text-muted small align-middle">{{ $groupIdx + 1 }}</td>
-                                    <td class="align-middle"><code>{{ $first->kodeMatKul }}</code></td>
-                                    <td class="align-middle font-weight-bold">{{ $first->namaMatKul }}</td>
+                                    <td class="align-middle"><code style="font-size:0.78rem">{{ $first->kodeMatKul }}</code></td>
+                                    <td class="align-middle font-weight-bold">
+                                        {{ $first->namaMatKul }}
+                                        {{-- Di mobile, tampilkan prodi di bawah nama MK --}}
+                                        <div class="d-md-none text-muted small font-weight-normal">
+                                            {{ $first->programStudi ?: '' }}
+                                        </div>
+                                    </td>
                                     <td class="text-center align-middle font-weight-bold text-primary">{{ $first->sks }}</td>
-                                    <td class="align-middle"><small>{{ $first->programStudi ?: '—' }}</small></td>
+                                    <td class="align-middle d-none d-md-table-cell"><small>{{ $first->programStudi ?: '—' }}</small></td>
                                     <td class="text-center align-middle">
                                         <span class="badge badge-secondary px-2 py-1">{{ $namaKelasGabung }}</span>
                                     </td>
                                     <td class="text-center align-middle">
                                         @if($allDiklaim)
                                             <span class="badge badge-success px-2 py-1">
-                                                <i class="fas fa-check mr-1"></i>Sudah Diklaim
+                                                <i class="fas fa-check"></i>
+                                                <span class="d-none d-sm-inline ml-1">Diklaim</span>
                                             </span>
                                         @else
                                             <button type="button"
@@ -297,7 +321,8 @@
                                                     data-daya-tampung="{{ $first->dayaTampung }}"
                                                     data-is-mbkm="{{ $first->isMbkm ? '1' : '0' }}"
                                                     data-kelas-detail='@json($kelasItems->map(fn($k) => ["id" => $k->id, "namaKelas" => $k->namaKelas])->values())'>
-                                                <i class="fas fa-hand-pointer mr-1"></i>Klaim
+                                                <i class="fas fa-hand-pointer"></i>
+                                                <span class="d-none d-sm-inline ml-1">Klaim</span>
                                             </button>
                                         @endif
                                     </td>
@@ -307,10 +332,11 @@
                             <tfoot>
                                 <tr class="table-light">
                                     <td colspan="3" class="text-right text-muted small font-weight-bold">
-                                        Total: {{ $matkulGroups->count() }} mata kuliah, {{ $kelasCount }} kelas
+                                        Total: {{ $matkulGroups->count() }} MK, {{ $kelasCount }} kelas
                                     </td>
                                     <td class="text-center font-weight-bold text-success">{{ $totalSksPeriode }}</td>
-                                    <td colspan="3"></td>
+                                    <td class="d-none d-md-table-cell"></td>
+                                    <td colspan="2"></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -375,27 +401,27 @@
                         <div class="card bg-light mb-3">
                             <div class="card-body py-2 px-3">
                                 <div class="row">
-                                    <div class="col-md-5">
+                                    <div class="col-12 col-md-5">
                                         <small class="text-muted">Mata Kuliah</small>
                                         <p class="mb-1 font-weight-bold" id="info_nama_mk">—</p>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-6 col-md-3">
                                         <small class="text-muted">Kode MK</small>
                                         <p class="mb-1 font-weight-bold" id="info_kode_mk">—</p>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-3 col-md-2">
                                         <small class="text-muted">Kelas</small>
                                         <p class="mb-1 font-weight-bold" id="info_kelas">—</p>
                                     </div>
-                                    <div class="col-md-2">
-                                        <small class="text-muted">SKS SIAKAD</small>
+                                    <div class="col-3 col-md-2">
+                                        <small class="text-muted">SKS</small>
                                         <p class="mb-1 font-weight-bold text-primary" id="info_sks_siakad">—</p>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <small class="text-muted">Program Studi</small>
                                         <p class="mb-0" id="info_prodi">—</p>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-12 col-md-6">
                                         <small class="text-muted">Semester</small>
                                         <p class="mb-0" id="info_periode">—</p>
                                     </div>

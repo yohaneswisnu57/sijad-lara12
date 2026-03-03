@@ -19,6 +19,73 @@
         <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
         <link href="{{ asset('assets/css/metisMenu.min.css') }}" rel="stylesheet" type="text/css" />
         <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" />
+
+        {{-- ── SIJAD Mobile Logo Override ────────────────────────────────────── --}}
+        <style>
+            /*
+             * Fix: Horizontal layout mobile — logo tidak muncul karena template
+             * memaksa topbar-left menjadi 70px dan logo-lg display:none !important.
+             * Override ini menampilkan logo penuh pada semua ukuran.
+             */
+
+            /* Desktop & tablet (> 991px): topbar-left 160px, logo horizontal penuh */
+            [data-layout="horizontal"] .topbar .topbar-left {
+                width: 170px;
+            }
+            [data-layout="horizontal"] .topbar .topbar-left .logo .logo-sm {
+                display: none !important;
+            }
+            [data-layout="horizontal"] .topbar .topbar-left .logo .logo-lg {
+                display: inline-block !important;
+                height: 40px !important;
+                width: auto;
+                max-width: 155px;
+                object-fit: contain;
+            }
+            [data-layout="horizontal"] .topbar .topbar-left .logo .logo-lg.logo-light {
+                display: none !important;
+            }
+            [data-layout="horizontal"] .navbar-custom {
+                margin-left: 170px;
+            }
+
+            /* Mobile (≤ 991px): topbar-left auto, tampilkan logo-sm yang cukup besar */
+            @media (max-width: 991px) {
+                [data-layout="horizontal"] .topbar .topbar-left {
+                    width: auto !important;
+                    padding: 0 8px;
+                    display: flex;
+                    align-items: center;
+                }
+                [data-layout="horizontal"] .topbar .topbar-left .logo {
+                    line-height: normal;
+                    display: flex;
+                    align-items: center;
+                }
+                /* Pada mobile, sembunyikan logo-lg, tampilkan logo-sm */
+                [data-layout="horizontal"] .topbar .topbar-left .logo .logo-lg {
+                    display: none !important;
+                }
+                [data-layout="horizontal"] .topbar .topbar-left .logo .logo-sm {
+                    display: inline-block !important;
+                    height: 38px !important;
+                    width: auto;
+                    object-fit: contain;
+                }
+                [data-layout="horizontal"] .navbar-custom {
+                    margin-left: 0 !important;
+                    flex: 1;
+                }
+            }
+
+            /* Avatar profil: pastikan gambar user tampil proporsional */
+            .nav-user img {
+                height: 36px !important;
+                width: 36px !important;
+                object-fit: cover;
+                border-radius: 50%;
+            }
+        </style>
         @stack('css')
     </head>
 
