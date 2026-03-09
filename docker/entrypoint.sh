@@ -26,6 +26,9 @@ echo "[entrypoint] Menjalankan migration..."
 php artisan migrate --force --no-interaction
 
 # ── 3. Optimasi untuk production ──────────────────────────────────────────────
+echo "[entrypoint] Menjalankan package:discover (composer --no-scripts)..."
+php artisan package:discover --no-interaction
+
 echo "[entrypoint] Optimasi aplikasi..."
 php artisan config:cache --no-interaction
 php artisan route:cache  --no-interaction

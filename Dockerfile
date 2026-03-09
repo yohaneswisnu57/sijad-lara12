@@ -22,6 +22,7 @@ RUN composer install \
     --no-dev \
     --no-interaction \
     --no-progress \
+    --no-scripts \
     --optimize-autoloader \
     --prefer-dist
 
@@ -47,19 +48,19 @@ RUN apk add --no-cache \
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd \
-        --with-freetype \
-        --with-jpeg \
+    --with-freetype \
+    --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo \
-        pdo_mysql \
-        gd \
-        zip \
-        mbstring \
-        bcmath \
-        opcache \
-        intl \
-        exif \
-        pcntl
+    pdo \
+    pdo_mysql \
+    gd \
+    zip \
+    mbstring \
+    bcmath \
+    opcache \
+    intl \
+    exif \
+    pcntl
 
 # Install Redis extension (opsional, jika nanti butuh Redis)
 # RUN pecl install redis && docker-php-ext-enable redis
@@ -88,13 +89,13 @@ COPY --from=frontend --chown=www-data:www-data /app/public/build ./public/build
 
 # Buat direktori storage dan set permission
 RUN mkdir -p \
-        storage/app/private \
-        storage/app/public \
-        storage/framework/cache \
-        storage/framework/sessions \
-        storage/framework/views \
-        storage/logs \
-        bootstrap/cache \
+    storage/app/private \
+    storage/app/public \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
@@ -102,6 +103,6 @@ RUN mkdir -p \
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
