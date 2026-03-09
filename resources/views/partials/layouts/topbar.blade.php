@@ -27,7 +27,7 @@
                         </a>
                         <ul class="submenu">
                             <li class="{{ Request::is('unsur-penilaian*') ? 'active' : '' }}">
-                                <a href="{{ route('unsur-penilaian.index') }}"><i class="dripicons-dot"></i>Unsur Penilaian</a>
+                                <a href="{{ route('unsur-penilaian.tree') }}"><i class="dripicons-dot"></i>Unsur Penilaian</a>
                             </li>
                         </ul><!--end submenu-->
                     </li><!--end has-submenu-->
