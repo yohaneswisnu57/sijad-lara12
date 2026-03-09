@@ -66,7 +66,7 @@ class UnsurPenilaianController extends Controller
 
         UnsurPenilaian::create($validatedData);
 
-        return redirect()->route('unsur-penilaian.index')
+        return redirect()->route('unsur-penilaian.tree')
                         ->with('success', 'Unsur Penilaian berhasil ditambahkan.');
     }
 
@@ -105,7 +105,7 @@ class UnsurPenilaianController extends Controller
 
         $unsurPenilaian->update($validatedData);
 
-        return redirect()->route('unsur-penilaian.index')
+        return redirect()->route('unsur-penilaian.tree')
                         ->with('success', 'Unsur Penilaian berhasil diperbarui.');
     }
 
@@ -122,7 +122,7 @@ class UnsurPenilaianController extends Controller
 
         $unsurPenilaian->delete();
 
-        return redirect()->route('unsur-penilaian.index')
+        return redirect()->route('unsur-penilaian.tree')
                         ->with('success', 'Unsur Penilaian berhasil dihapus.');
     }
 }

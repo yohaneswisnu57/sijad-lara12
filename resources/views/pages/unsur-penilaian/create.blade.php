@@ -9,7 +9,7 @@
                 <div class="float-right">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">SIJAD</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('unsur-penilaian.index') }}">Unsur Penilaian</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('unsur-penilaian.tree') }}">Unsur Penilaian</a></li>
                         <li class="breadcrumb-item active">Tambah Baru</li>
                     </ol>
                 </div>
@@ -80,7 +80,7 @@
                                 <button type="submit" class="btn btn-primary waves-effect waves-light">
                                     <i class="fas fa-save mr-1"></i> Simpan Data
                                 </button>
-                                <a href="{{ route('unsur-penilaian.index') }}" class="btn btn-secondary waves-effect m-l-5">
+                                <a href="{{ route('unsur-penilaian.tree') }}" class="btn btn-secondary waves-effect m-l-5">
                                     <i class="fas fa-times mr-1"></i> Batal
                                 </a>
                             </div>
