@@ -1,13 +1,19 @@
 {
     "agents": [
-        "cursor"
+        "gemini",
+        "claude_code",
+        "codex"
     ],
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
+    "packages": [
+        "laravel/fortify"
+    ],
     "sail": false,
     "skills": [
         "pest-testing",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "developing-with-fortify"
     ]
 }

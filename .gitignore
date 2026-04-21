@@ -24,7 +24,7 @@ Homestead.yaml
 Thumbs.db
 GUIDELINES.md
 structure.md
-*.md
+# *.md
 
 # Docker
 docker-compose.yml
